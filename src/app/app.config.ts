@@ -1,12 +1,23 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
+import { routes } from './app.routes'; // Importa las rutas (que definiremos en el Paso 2)
 
-import { routes } from './app.routes';
+// --- Importaciones Clave que añadimos ---
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { jwtInterceptor } from './core/jwt-interceptor'; // 1. Importa tu interceptor
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async'; // 2. Para Angular Material
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(routes)
+    provideRouter(routes),
+    
+    // --- Líneas que añadimos ---
+    provideAnimationsAsync(), // 3. Activa las animaciones de Angular Material
+    
+    // 4. Activa HttpClient y le registra tu interceptor
+    provideHttpClient(
+      withInterceptors([jwtInterceptor]) 
+    )
   ]
 };

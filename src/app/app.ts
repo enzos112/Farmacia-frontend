@@ -1,12 +1,13 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router'; // 1. Asegúrate de que importa RouterOutlet
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  standalone: true,
+  imports: [RouterOutlet], // 2. Asegúrate de que RouterOutlet esté en 'imports'
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrls: ['./app.css'] // (O .css si lo cambiaste)
 })
-export class App {
-  protected readonly title = signal('farmacia-frontend-v2');
+export class AppComponent { // <-- 3. La clase se llama AppComponent
+  title = 'farmacia-frontend-v2';
 }

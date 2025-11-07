@@ -1,0 +1,62 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  /* Un fondo con un degradado sutil */
+  background: linear-gradient(120deg, #e0f7fa, #b2ebf2); /* Colores cian/celeste de farmacia */
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 10px; /* Bordes redondeados */
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1); /* Sombra más pronunciada */
+}
+
+/* --- Estilos para el Logo --- */
+.login-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 24px;
+  padding-bottom: 16px;
+}
+
+.login-logo mat-icon {
+  font-size: 80px;
+  width: 80px;
+  height: 80px;
+  /* Color verde farmacia */
+  color: #00796b; 
+}
+
+/* --- Estilos del Header --- */
+.login-card mat-card-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* --- Estilos del Formulario --- */
+.login-card mat-form-field,
+.login-card button {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.login-card button {
+  padding: 1.25rem 0;
+  margin-top: 16px;
+  background-color: #00796b; /* Botón con color verde farmacia */
+  color: white;
+}
+
+.error-message {
+  color: #D32F2F; /* Rojo de error de Material */
+  text-align: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}

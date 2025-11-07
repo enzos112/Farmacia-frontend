@@ -1,0 +1,34 @@
+<mat-sidenav-container class="layout-container">
+
+  <mat-sidenav #sidenav mode="side" opened class="sidenav">
+    
+    <div class="sidenav-header">
+      <img src="favicon.ico" alt="Logo Farmacia" class="logo"> 
+      <h2 class="logo-text">Farmacia Web</h2>
+    </div>
+
+    <mat-nav-list>
+      <a mat-list-item 
+         *ngFor="let item of menuItems" 
+         [routerLink]="item.link" 
+         routerLinkActive="active-link"> <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+        <span matListItemTitle>{{ item.text }}</span>
+      </a>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="main-content">
+
+    <mat-toolbar color="primary" class="toolbar">
+      <span>¡Bienvenido!</span> <span class="spacer"></span> <button mat-icon-button (click)="logout()" matTooltip="Cerrar Sesión">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </mat-toolbar>
+
+    <div class="page-content">
+      <router-outlet></router-outlet>
+    </div>
+
+  </mat-sidenav-content>
+
+</mat-sidenav-container>

@@ -1,0 +1,60 @@
+/* --- Contenedor Principal --- */
+.layout-container {
+  /* Hace que el layout ocupe el 100% de la pantalla */
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #f5f5f5; /* Fondo gris claro para el contenido */
+}
+
+/* --- Sidenav (Menú Lateral) --- */
+.sidenav {
+  width: 260px;
+  background-color: #ffffff; /* Fondo blanco */
+  border-right: 1px solid rgba(0, 0, 0, 0.12); /* Borde sutil */
+}
+
+.sidenav-header {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.sidenav-header .logo {
+  height: 40px;
+  width: 40px;
+  margin-right: 16px;
+}
+
+.sidenav-header .logo-text {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Estilo para el enlace activo en el menú */
+.active-link {
+  background-color: rgba(63, 81, 181, 0.1); /* Color primario (azul) con opacidad */
+  color: #3f51b5; /* Color primario (azul) */
+}
+
+/* --- Toolbar (Barra Superior) --- */
+.toolbar {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra sutil */
+  position: sticky; /* Fija la barra arriba */
+  top: 0;
+  z-index: 100; /* Se asegura que esté por encima del contenido */
+}
+
+.spacer {
+  flex: 1 1 auto; /* Empuja el botón de logout a la derecha */
+}
+
+/* --- Contenido Principal --- */
+.page-content {
+  /* Padding para que el contenido no esté pegado a los bordes */
+  padding: 24px;
+}
