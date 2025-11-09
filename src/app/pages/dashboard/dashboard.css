@@ -1,0 +1,335 @@
+.dashboard-container {
+  padding: 30px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  /* Altura base para igualar tarjetas principales */
+  --altura-tarjeta-principal: 178px;
+}
+
+/* Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.welcome-text {
+  margin: 0;
+  font-size: 14px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.user-name {
+  margin: 5px 0 0 0;
+  font-size: 32px;
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+.btn-nuevo-producto {
+  background-color: #303F9F;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-nuevo-producto:hover {
+  background-color: rgb(48, 63, 159); /* tono más oscuro del #303F9F */
+}
+
+/* Main Content Layout */
+.dashboard-content {
+  display: grid;
+  grid-template-columns: 1fr 450px;
+  gap: 20px;
+}
+
+/* Cards */
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 20px;
+}
+
+.card h3 {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: #6c757d;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Reporte del Día */
+.reporte-dia {
+  margin-bottom: 20px;
+  min-height: var(--altura-tarjeta-principal);
+}
+
+.metricas-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.metrica-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.metrica-valor {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.metrica-label {
+  font-size: 13px;
+  color: #95a5a6;
+}
+
+/* Reporte de Inventario */
+.card.reporte-inventario {
+  min-height: 350px !important; /* altura equilibrada con top-vendidos */
+}
+
+.subtitle {
+  font-size: 12px;
+  color: #95a5a6;
+  margin: -8px 0 20px 0;
+}
+
+.grafico-inventario {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.chart-svg {
+  width: 100%;
+  height: 200px;
+}
+
+.inventario-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #95a5a6;
+}
+
+.stat-value {
+  font-size: 13px;
+  color: #6c757d;
+}
+
+.stat-value strong {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.inventario-alerts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.alert-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+}
+
+.alert-icon {
+  font-size: 24px;
+}
+
+.alert-title {
+  font-size: 12px;
+  color: #6c757d;
+  margin-bottom: 4px;
+}
+
+.alert-count {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* Mes Actual */
+.mes-actual {
+  background: #303F9F; /* color solicitado */
+  color: white;
+  min-height: var(--altura-tarjeta-principal); /* igual a Reporte del día */   
+}
+
+.mes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.mes-actual h3 {
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  font-size: 12px;
+}
+
+.mes-nombre {
+  color: white;
+  font-size: 14px;
+  margin: 4px 0 0 0;
+  font-weight: 500;
+}
+
+.mes-selector {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.mes-selector:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.mes-selector:focus {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.mes-selector option {
+  background-color: #303F9F;
+  color: white;
+  padding: 8px;
+}
+
+.mes-total {
+  font-size: 42px;
+  font-weight: 700;
+  color: white;
+}
+
+
+/* Top productos más vendidos */
+.card.top-vendidos {
+  min-height: 350px !important; /* igual altura que reporte-inventario */
+}
+
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.top-fecha {
+  font-size: 13px;
+  color: #95a5a6;
+  margin: 0;
+}
+
+.top-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.top-item .top-row {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.top-index {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f2f5;
+  color: #303F9F;
+  font-weight: 700;
+}
+
+.top-nombre {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 4px;
+}
+
+.top-meta {
+  font-size: 12px;
+  color: #6c757d;
+  margin-bottom: 6px;
+}
+
+.progress {
+  width: 100%;
+  height: 8px;
+  background: #eef2f6;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #303F9F, #5C6BC0);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .dashboard-content {
+    grid-template-columns: 1fr;
+  }
+
+  .metricas-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 20px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .metricas-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .user-name {
+    font-size: 24px;
+  }
+}
