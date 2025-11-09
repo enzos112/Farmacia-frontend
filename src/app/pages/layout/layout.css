@@ -1,60 +1,134 @@
-/* --- Contenedor Principal --- */
-.layout-container {
-  /* Hace que el layout ocupe el 100% de la pantalla */
+.app-layout-container {
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
   right: 0;
-  background: #f5f5f5; /* Fondo gris claro para el contenido */
+  background: #f5f5f5; /* Fondo gris claro */
 }
 
 /* --- Sidenav (Menú Lateral) --- */
-.sidenav {
+.app-sidenav {
   width: 260px;
-  background-color: #ffffff; /* Fondo blanco */
-  border-right: 1px solid rgba(0, 0, 0, 0.12); /* Borde sutil */
+  background-color: #303F9F; /* Color primario (azul oscuro) */
+  color: #ffffff; /* Texto blanco */
+  border-right: none; /* Quitamos el borde para un look limpio */
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); /* Sombra sutil */
+  display: flex;
+  flex-direction: column;
 }
 
-.sidenav-header {
+.sidenav-header-logo {
   display: flex;
   align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  justify-content: center;
+  padding: 20px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Borde blanco sutil */
 }
 
-.sidenav-header .logo {
+.app-logo-small {
   height: 40px;
-  width: 40px;
-  margin-right: 16px;
+  width: auto; /* Asegura que la imagen mantenga su proporción */
+  margin-right: 10px;
 }
 
-.sidenav-header .logo-text {
-  font-size: 1.25rem;
-  font-weight: 500;
+.app-title-sidenav {
+  font-size: 1.4rem;
+  font-weight: 700;
   margin: 0;
+  color: #ffffff;
 }
 
-/* Estilo para el enlace activo en el menú */
-.active-link {
-  background-color: rgba(63, 81, 181, 0.1); /* Color primario (azul) con opacidad */
-  color: #3f51b5; /* Color primario (azul) */
+.app-nav-list {
+  padding-top: 10px;
+  flex-grow: 1; /* Ocupa el espacio disponible */
 }
+
+.app-nav-item {
+  color: #ffffff; /* Texto blanco por defecto */
+  margin: 5px 10px;
+  border-radius: 8px; /* Bordes redondeados para los items del menú */
+}
+
+.app-nav-item mat-icon {
+  color: rgba(255, 255, 255, 0.7); /* Íconos un poco más claros */
+}
+
+/* Estilo para el enlace activo */
+.active-link {
+  background-color: rgba(233, 30, 99, 0.2); /* Color secundario (rosa) con opacidad */
+  color: #E91E63; /* Texto rosa */
+}
+
+.active-link mat-icon {
+  color: #E91E63 !important; /* Ícono rosa */
+}
+
+.app-nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidenav-footer {
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.sidenav-footer button {
+  width: 100%;
+  background-color: #E91E63; /* Botón de cerrar sesión con color secundario */
+  color: white;
+}
+
 
 /* --- Toolbar (Barra Superior) --- */
-.toolbar {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra sutil */
-  position: sticky; /* Fija la barra arriba */
+.app-toolbar {
+  background-color: #ffffff; /* Fondo blanco */
+  color: #303F9F; /* Texto azul oscuro */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
   top: 0;
-  z-index: 100; /* Se asegura que esté por encima del contenido */
+  z-index: 100;
+  height: 64px; /* Altura estándar */
 }
 
-.spacer {
-  flex: 1 1 auto; /* Empuja el botón de logout a la derecha */
+.app-toolbar-title {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin-left: 20px;
+}
+
+.menu-button {
+  color: #303F9F; /* Ícono de menú azul oscuro */
+}
+
+.app-spacer {
+  flex: 1 1 auto;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  color: #424242;
+}
+
+.user-info span {
+  margin-right: 8px;
+  font-weight: 500;
+}
+
+.user-info button {
+  color: #303F9F; /* Ícono de usuario azul oscuro */
 }
 
 /* --- Contenido Principal --- */
-.page-content {
-  /* Padding para que el contenido no esté pegado a los bordes */
-  padding: 24px;
+.app-main-content {
+  padding: 20px;
 }
+
+.app-page-content {
+  padding: 20px;
+  background-color: #f5f5f5; /* Fondo del contenido de la página */
+  min-height: calc(100vh - 64px - 40px); /* Altura mínima: pantalla - toolbar - padding */
+  border-radius: 8px; /* Bordes redondeados para el contenido */
+} 

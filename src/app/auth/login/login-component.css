@@ -1,62 +1,114 @@
-.login-container {
+.login-wrapper {
+  display: flex;
+  height: 100vh; /* Ocupa toda la altura de la ventana */
+  width: 100vw;  /* Ocupa todo el ancho de la ventana */
+  overflow: hidden; /* Evita scrolls no deseados */
+}
+
+.login-panel {
+  flex: 1; /* Ambos paneles ocupan la misma cantidad de espacio */
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  /* Un fondo con un degradado sutil */
-  background: linear-gradient(120deg, #e0f7fa, #b2ebf2); /* Colores cian/celeste de farmacia */
+  padding: 24px;
+  box-sizing: border-box; /* Incluye padding en el tamaño total */
+}
+
+/* Panel Izquierdo: Formulario */
+.left-panel {
+  background-color: #ffffff; /* Fondo blanco */
 }
 
 .login-card {
+  max-width: 450px; /* Ancho máximo para el formulario */
   width: 100%;
-  max-width: 400px;
-  border-radius: 10px; /* Bordes redondeados */
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1); /* Sombra más pronunciada */
+  padding: 30px;
+  box-shadow: none; /* Quitamos la sombra de la tarjeta para un look más minimalista */
+  background: transparent; /* Fondo transparente */
 }
 
-/* --- Estilos para el Logo --- */
-.login-logo {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding-top: 24px;
-  padding-bottom: 16px;
-}
-
-.login-logo mat-icon {
-  font-size: 80px;
-  width: 80px;
-  height: 80px;
-  /* Color verde farmacia */
-  color: #00796b; 
-}
-
-/* --- Estilos del Header --- */
-.login-card mat-card-header {
+.login-header {
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  margin-bottom: 30px;
+  display: block; /* Para centrar correctamente el texto */
 }
 
-/* --- Estilos del Formulario --- */
-.login-card mat-form-field,
-.login-card button {
+.login-header .main-title {
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: #424242; /* Gris oscuro para el título */
+  margin-bottom: 8px;
+}
+
+.login-header mat-card-subtitle {
+  font-size: 1.1rem;
+  color: #757575; /* Gris medio para el subtítulo */
+}
+
+.full-width {
   width: 100%;
-  margin-top: 10px;
+  margin-bottom: 20px;
 }
 
-.login-card button {
-  padding: 1.25rem 0;
-  margin-top: 16px;
-  background-color: #00796b; /* Botón con color verde farmacia */
+.login-button {
+  width: 100%;
+  padding: 15px 0;
+  font-size: 1.1rem;
+  background-color: #E91E63; /* Color secundario (rosa) para el botón principal */
   color: white;
+  margin-top: 10px;
+  border-radius: 8px; /* Bordes más suaves */
+}
+
+.login-button:disabled {
+  background-color: #f8bbd0; /* Un rosa más claro para el estado deshabilitado */
 }
 
 .error-message {
-  color: #D32F2F; /* Rojo de error de Material */
+  color: #D32F2F;
   text-align: center;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+  margin-top: 15px;
+  margin-bottom: 15px;
   font-weight: 500;
+}
+
+.register-link {
+  text-align: center;
+  margin-top: 25px;
+  font-size: 0.95rem;
+  color: #757575;
+}
+
+.register-link a {
+  color: #E91E63; /* Color secundario (rosa) para el enlace */
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.register-link a:hover {
+  text-decoration: underline;
+}
+
+/* Panel Derecho: Logo de la Farmacia */
+.right-panel {
+  background-color: #303F9F; /* Color primario (azul oscuro) del logo */
+  background-size: contain; /* Ajusta la imagen dentro del contenedor */
+  background-repeat: no-repeat;
+  background-position: center center;
+  /* El logo real de "Bótica MARCAFAR" se define como background-image en el HTML via [style.background-image] */
+}
+
+/* Estilos adicionales para los inputs de Material */
+.mat-form-field-wrapper {
+  padding-bottom: 0 !important; /* Elimina padding extra de Material */
+}
+.mat-form-field-infix {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+.mat-form-field-underline {
+  bottom: 0 !important;
+}
+.mat-form-field-appearance-outline .mat-form-field-wrapper {
+  margin: 0 !important;
 }

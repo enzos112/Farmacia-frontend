@@ -1,46 +1,48 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule, RouterOutlet } from '@angular/router'; // RouterModule es para los routerLink
-import { AuthService } from '../../core/auth-service'; // Importa tu auth-service
+import { Router, RouterModule, RouterOutlet } from '@angular/router';
+import { AuthService } from '../../core/auth-service';
 
-// --- Importaciones de Angular Material para el Layout ---
+// --- Importaciones de Angular Material ---
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
+// ¡¡AÑADE ESTA LÍNEA!!
+import { MatMenuModule } from '@angular/material/menu'; 
 
 @Component({
   selector: 'app-layout',
   standalone: true,
   imports: [
     CommonModule,
-    RouterOutlet,     // Para cargar las rutas hijas (ej. dashboard)
-    RouterModule,     // Para que funcionen los [routerLink] del menú
-    
-    // --- Módulos de Material ---
+    RouterOutlet,
+    RouterModule,
     MatSidenavModule,
     MatToolbarModule,
     MatListModule,
     MatIconModule,
-    MatButtonModule
+    MatButtonModule,
+    MatTooltipModule,
+    // ¡¡AÑADE ESTA LÍNEA!!
+    MatMenuModule 
   ],
   templateUrl: './layout.html',
-  styleUrls: ['./layout.css'] // Usamos .scss como en tu archivo
+  styleUrls: ['./layout.css']
 })
-export class LayoutComponent { // <-- ¡Asegúrate que la clase se llame así!
+export class LayoutComponent {
 
-  // Inyectamos el AuthService y Router
   private authService = inject(AuthService);
+  
+  // Agrega esta línea para la ruta de tu logo
+  logoSmallImageUrl: string = 'images/logo_botica_marcafar.jpg'; // Versión más pequeña o el mismo, pero lo manejaremos con CSS
 
-  // Función para el botón de Cerrar Sesión
   logout() {
     this.authService.logout();
-    // No necesitas redirigir, el authService ya lo hace
   }
 
-  // Lista de enlaces para el menú lateral
-  // (Igual a los que definiste en pages.routes.ts)
   menuItems = [
     { text: 'Dashboard', link: '/pages/dashboard', icon: 'dashboard' },
     { text: 'Productos', link: '/pages/productos', icon: 'inventory_2' },

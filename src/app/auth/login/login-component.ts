@@ -15,38 +15,36 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-  selector: 'app-login', // El selector estándar de Angular
+  selector: 'app-login',
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule, // Módulo para formularios reactivos
-    RouterModule,        // Módulo para el router
-    
-    // Módulos de Angular Material
+    ReactiveFormsModule,
+    RouterModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
     MatIconModule
   ],
-  // ¡Usando los NOMBRES EXACTOS de tus archivos!
   templateUrl: './login-component.html',
-  styleUrls: ['./login-component.css'] 
+  styleUrls: ['./login-component.css']
 })
-export class LoginComponent { // <-- Esta es la clase que 'app.routes.ts' importa
+export class LoginComponent {
 
   loginForm: FormGroup;
-  error: string | null = null; // Para mostrar mensajes de error
+  error: string | null = null;
+  
+  // Agrega esta línea para la ruta de tu logo
+  logoImageUrl: string = 'images/logo_botica_marcafar.jpg'; 
 
-  // Inyectamos los servicios que necesitamos
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
-  private zone = inject(NgZone); // Para asegurar la redirección
+  private zone = inject(NgZone);
 
   constructor() {
     this.loginForm = this.fb.group({
-      // Coincide con tu DTO 'LoginRequestDTO' (login y password)
       login: ['', [Validators.required]],
       password: ['', [Validators.required, Validators.minLength(8)]]
     });

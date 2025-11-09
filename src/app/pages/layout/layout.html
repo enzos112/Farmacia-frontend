@@ -1,31 +1,56 @@
-<mat-sidenav-container class="layout-container">
+<mat-sidenav-container class="app-layout-container">
 
-  <mat-sidenav #sidenav mode="side" opened class="sidenav">
+  <mat-sidenav #sidenav mode="side" opened class="app-sidenav">
     
-    <div class="sidenav-header">
-      <img src="favicon.ico" alt="Logo Farmacia" class="logo"> 
-      <h2 class="logo-text">Farmacia Web</h2>
+    <div class="sidenav-header-logo">
+      <img [src]="logoSmallImageUrl" alt="Logo MarcaFarmacia" class="app-logo-small">
+      <h2 class="app-title-sidenav">MARCAFAR</h2>
     </div>
 
-    <mat-nav-list>
+    <mat-nav-list class="app-nav-list">
       <a mat-list-item 
          *ngFor="let item of menuItems" 
          [routerLink]="item.link" 
-         routerLinkActive="active-link"> <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+         routerLinkActive="active-link"
+         class="app-nav-item">
+        <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
         <span matListItemTitle>{{ item.text }}</span>
       </a>
     </mat-nav-list>
+
+    <div class="sidenav-footer">
+      <button mat-flat-button color="warn" (click)="logout()" matTooltip="Cerrar Sesión">
+        <mat-icon>exit_to_app</mat-icon> Cerrar Sesión
+      </button>
+    </div>
   </mat-sidenav>
 
-  <mat-sidenav-content class="main-content">
+  <mat-sidenav-content class="app-main-content">
 
-    <mat-toolbar color="primary" class="toolbar">
-      <span>¡Bienvenido!</span> <span class="spacer"></span> <button mat-icon-button (click)="logout()" matTooltip="Cerrar Sesión">
-        <mat-icon>logout</mat-icon>
+    <mat-toolbar color="primary" class="app-toolbar">
+      <button mat-icon-button (click)="sidenav.toggle()" class="menu-button">
+        <mat-icon>menu</mat-icon>
       </button>
+      <span class="app-toolbar-title">Sistema de Gestión de Farmacia</span>
+      <span class="app-spacer"></span>
+      <div class="user-info">
+        <span>Admin User</span> <button mat-icon-button [matMenuTriggerFor]="userMenu">
+          <mat-icon>account_circle</mat-icon>
+        </button>
+        <mat-menu #userMenu="matMenu">
+          <button mat-menu-item>
+            <mat-icon>settings</mat-icon>
+            <span>Configuración</span>
+          </button>
+          <button mat-menu-item (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            <span>Cerrar Sesión</span>
+          </button>
+        </mat-menu>
+      </div>
     </mat-toolbar>
 
-    <div class="page-content">
+    <div class="app-page-content">
       <router-outlet></router-outlet>
     </div>
 
