@@ -1,1 +1,114 @@
-<p>dashboard works!</p>
+<div class="dashboard-container">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div>
+      <p class="welcome-text">¡BIENVENIDO!</p>
+      <h1 class="user-name">Administrador</h1>
+    </div>
+    <button class="btn-nuevo-producto" (click)="irAProductos()">Ver Productos</button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="dashboard-content">
+    <!-- Left Section -->
+    <div class="left-section">
+      <!-- Reporte del día -->
+      <div class="card reporte-dia">
+        <h3>REPORTE DEL DÍA</h3>
+        <div class="metricas-grid">
+          <div class="metrica-item">
+            <div class="metrica-valor">S/. {{ ventasDelDia.toFixed(2) }}</div>
+            <div class="metrica-label">Ventas del día</div>
+          </div>
+          <div class="metrica-item">
+            <div class="metrica-valor">{{ nuevosProductos }}</div>
+            <div class="metrica-label">Nuevos productos</div>
+          </div>
+          <div class="metrica-item">
+            <div class="metrica-valor">{{ numeroVentasDelDia }}</div>
+            <div class="metrica-label">Número de ventas del día</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reporte de inventario  -->
+      <div class="card reporte-inventario">
+        <h3>REPORTE DE INVENTARIO</h3>
+        <p class="subtitle">Ingreso y stock de productos</p>
+        <div class="grafico-inventario">
+          <svg viewBox="0 0 400 200" class="chart-svg">
+            <path d="M 0,150 Q 50,100 100,120 T 200,80 T 300,60 T 400,50" fill="none" stroke="#4A90E2" stroke-width="3"/>
+            <path d="M 0,150 Q 50,100 100,120 T 200,80 T 300,60 T 400,50 L 400,200 L 0,200 Z" fill="url(#gradient-inventario)" opacity="0.3"/>
+            <defs>
+              <linearGradient id="gradient-inventario" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:0.8" />
+                <stop offset="100%" style="stop-color:#4A90E2;stop-opacity:0" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="inventario-stats">
+            <div class="stat-label">{{ mesAbrevSeleccionado }}</div>
+            <div class="stat-value">Ingresados este mes: <strong>{{ totalProductosIngresados }} productos</strong></div>
+          </div>
+        </div>
+        <div class="inventario-alerts">
+          <div class="alert-item sin-stock">
+            <span class="alert-icon"></span>
+            <div>
+              <div class="alert-title">Productos sin stock</div>
+              <div class="alert-count">{{ productosEnStock }}</div>
+            </div>
+          </div>
+          <div class="alert-item stock-minimo">
+            <span class="alert-icon"></span>
+            <div>
+              <div class="alert-title">Productos con stock mínimo</div>
+              <div class="alert-count">{{ productosConStockMinimo }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Section -->
+    <div class="right-section">
+      <!-- Mes Actual  -->
+      <div class="card mes-actual">
+        <div class="mes-header">
+          <div>
+            <h3>MES ACTUAL</h3>
+            <p class="mes-nombre">{{ mesActual }}</p>
+          </div>
+          <select class="mes-selector" [(ngModel)]="mesSeleccionado" (change)="onMesChange($event)">
+            <option *ngFor="let mes of mesesDelAnio" [value]="mes">{{ mes }}</option>
+          </select>
+        </div>
+        <div class="mes-total">S/. {{ totalMesActual.toLocaleString('es-PE') }}</div>
+      </div>
+
+      <!-- Top productos más vendidos -->
+      <div class="card top-vendidos">
+        <div class="top-header">
+          <h3>PRODUCTOS MÁS VENDIDOS</h3>
+          <p class="top-fecha">{{ mesSeleccionado || mesActual }}</p>
+        </div>
+        <ul class="top-list">
+          <li class="top-item" *ngFor="let p of topProductos; let i = index">
+            <div class="top-row">
+              <span class="top-index">{{ i + 1 }}</span>
+              <div class="top-info">
+                <div class="top-nombre">{{ p.nombre }}</div>
+                <div class="top-meta">
+                  <span class="top-ventas">{{ p.ventas }} unid.</span>
+                </div>
+                <div class="progress">
+                  <div class="progress-bar" [style.width.%]="(p.ventas / maxVentasTop) * 100"></div>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
