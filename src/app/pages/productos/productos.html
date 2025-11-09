@@ -1,1 +1,348 @@
-<p>productos works!</p>
+<div class="productos-container">
+  <!-- Sección de búsqueda y filtros -->
+  <div class="search-section" *ngIf="!mostrarCategorias && !mostrarUnidades">
+    <div class="search-filters">
+      <div class="filter-group">
+        <label class="filter-label">Término de búsqueda</label>
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="Buscar por nombre"
+          [(ngModel)]="searchTerm">
+      </div>
+      
+      <div class="filter-group">
+        <label class="filter-label">Filtrar por Stock</label>
+        <select class="stock-filter" [(ngModel)]="stockFilter">
+          <option value="">Todos</option>
+          <option value="sin-stock">Sin Stock</option>
+          <option value="stock-bajo">Stock Bajo</option>
+          <option value="con-stock">Con Stock</option>
+        </select>
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn-buscar" (click)="buscarProductos()">
+          <span class="icon-search"></span> Buscar
+        </button>
+        <button class="btn-limpiar" (click)="limpiarFiltros()">
+          <span class="icon-clean"></span> Limpiar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header con título y botones de acción -->
+  <div class="productos-header">
+    <h2 class="page-title">{{ pageTitle }}</h2>
+    <div class="header-actions">
+      <button class="btn-reporte-stock" (click)="reporteStockBajo()">
+        <span class="icon-warning"></span> Reporte Stock Bajo
+      </button>
+      <button class="btn-nuevo-producto" (click)="nuevoProducto()">
+        <span class="icon-add"></span> Nuevo Producto
+      </button>
+      <button class="btn-categorias" (click)="verCategorias()">
+        <span class="icon-category"></span> Categorías
+      </button>
+      <button class="btn-unidades-medida" (click)="verUnidadesMedida()">
+        <span class="icon-units"></span> Unidades de Medida
+      </button>
+    </div>
+  </div>
+
+  <!-- Botón debajo del título cuando estamos en Categorías -->
+  <div class="sub-actions" *ngIf="mostrarCategorias">
+    <button class="btn-nueva-categoria" (click)="nuevoCategoria()">
+      <span class="icon-add"></span> Nueva Categoría
+    </button>
+    <button class="btn-ver-productos" (click)="verProductos()">
+      <span class="icon-list"></span> Lista de Productos
+    </button>
+  </div>
+
+  <!-- Botón debajo del título cuando estamos en Unidades de Medida -->
+  <div class="sub-actions" *ngIf="mostrarUnidades">
+    <button class="btn-nueva-unidad" (click)="nuevaUnidad()">
+      <span class="icon-add"></span> Crear Nueva Unidad
+    </button>
+    <button class="btn-ver-productos" (click)="verProductos()">
+      <span class="icon-list"></span> Lista de Productos
+    </button>
+  </div>
+
+  <!-- Tabla de productos -->
+  <div class="productos-table-container" *ngIf="!mostrarCategorias && !mostrarUnidades">
+    <table class="productos-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Categoría</th>
+          <th>Stock</th>
+          <th>Precio</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let producto of productosFiltrados" class="producto-row">
+          <td class="producto-nombre">{{ producto.nombre }}</td>
+          <td class="producto-categoria">{{ getCategoria(producto) }}</td>
+          <td class="producto-stock" [ngClass]="getStockClass(producto.stock)">
+            {{ producto.stock.toFixed(2) }}
+          </td>
+          <td class="producto-precio">${{ producto.precioVenta.toFixed(2) }}</td>
+          <td class="producto-acciones">
+            <button class="btn-accion btn-editar" (click)="editarProducto(producto)" title="Editar">
+              Editar
+            </button>
+            <button class="btn-accion btn-eliminar" (click)="eliminarProducto(producto)" title="Eliminar">
+              Eliminar
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="productosFiltrados.length === 0 && !isLoading">
+          <td colspan="5" class="no-productos">
+            No se encontraron productos
+          </td>
+        </tr>
+        <tr *ngIf="isLoading">
+          <td colspan="5" class="loading-productos">
+            <div class="spinner"></div>
+            Cargando productos...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tabla de Categorías -->
+  <div class="productos-table-container" *ngIf="mostrarCategorias">
+    <table class="productos-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cat of categoriasGestion">
+          <td class="producto-nombre">{{ cat.nombre }}</td>
+          <td class="producto-acciones">
+            <button class="btn-accion btn-editar" (click)="editarCategoria(cat)" title="Editar">
+              Editar
+            </button>
+            <button class="btn-accion btn-eliminar" (click)="eliminarCategoria(cat)" title="Eliminar">
+              Eliminar
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="categoriasGestion.length === 0">
+          <td colspan="2" class="no-productos">No hay categorías registradas</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tabla de Unidades de Medida -->
+  <div class="productos-table-container" *ngIf="mostrarUnidades">
+    <table class="productos-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Símbolo</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let u of unidadesGestion">
+          <td class="producto-nombre">{{ u.nombre }}</td>
+          <td class="producto-categoria">{{ u.simbolo }}</td>
+          <td class="producto-acciones">
+            <button class="btn-accion btn-editar" (click)="editarUnidad(u)" title="Editar">
+              Editar
+            </button>
+            <button class="btn-accion btn-eliminar" (click)="eliminarUnidad(u)" title="Eliminar">
+              Eliminar
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="unidadesGestion.length === 0">
+          <td colspan="3" class="no-productos">No hay unidades registradas</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal para Crear/Editar Producto -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="cerrarModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">{{ modoEdicion ? 'Editar Producto' : 'Crear Producto' }}</h2>
+        <button class="btn-close" (click)="cerrarModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <form class="producto-form">
+          <!-- Fila 1: Nombre -->
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label class="form-label">Nombre del Producto *</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                [(ngModel)]="productoForm.nombre"
+                name="nombre"
+                placeholder="Ej: Paracetamol 500mg"
+                required>
+            </div>
+          </div>
+
+          <!-- Fila 2: Descripción -->
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label class="form-label">Descripción</label>
+              <textarea 
+                class="form-control form-textarea" 
+                [(ngModel)]="productoForm.descripcion"
+                name="descripcion"
+                rows="2"
+                placeholder=""></textarea>
+            </div>
+          </div>
+
+          <!-- Fila 3: Categoría y Unidad de Medida -->
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label class="form-label">Categoría</label>
+              <select 
+                class="form-control" 
+                [(ngModel)]="productoForm.categoria"
+                name="categoria">
+                <option value="">-- Seleccione Categoría --</option>
+                <option *ngFor="let cat of categorias" [value]="cat">{{ cat }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Unidad de Medida</label>
+              <select 
+                class="form-control" 
+                [(ngModel)]="productoForm.unidadMedida"
+                name="unidadMedida">
+                <option value="">-- Seleccione Unidad --</option>
+                <option value="Caja">Caja</option>
+                <option value="Frasco">Frasco</option>
+                <option value="Paquete">Paquete</option>
+                <option value="Tabletas">Tabletas</option>
+                <option value="Tubo">Tubo</option>
+                <option value="Unidad">Unidad</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Fila 4: Laboratorio, Presentación y Ubicación -->
+          <div class="form-row three-cols">
+            <div class="form-group">
+              <label class="form-label">Laboratorio</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                [(ngModel)]="productoForm.laboratorio"
+                name="laboratorio"
+                placeholder="">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Presentación</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                [(ngModel)]="productoForm.presentacion"
+                name="presentacion"
+                placeholder="">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ubicación</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                [(ngModel)]="productoForm.ubicacion"
+                name="ubicacion"
+                placeholder="">
+            </div>
+          </div>
+
+          <!-- Fila 5: Precios -->
+          <div class="form-row three-cols">
+            <div class="form-group">
+              <label class="form-label">Precio al por Menor</label>
+              <input 
+                type="number" 
+                class="form-control" 
+                [(ngModel)]="productoForm.precioCompra"
+                name="precioCompra"
+                step="0.01"
+                placeholder="0.00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Precio de Compra</label>
+              <input 
+                type="number" 
+                class="form-control" 
+                [(ngModel)]="productoForm.precioVenta"
+                name="precioVenta"
+                step="0.01"
+                placeholder="0.00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Precio al por Mayor</label>
+              <input 
+                type="number" 
+                class="form-control" 
+                [(ngModel)]="productoForm.precioMayor"
+                name="precioMayor"
+                step="0.01"
+                placeholder="0.00">
+            </div>
+          </div>
+
+          <!-- Fila 6: Stock, Stock Mínimo y Fecha de Vencimiento -->
+          <div class="form-row three-cols">
+            <div class="form-group">
+              <label class="form-label">Stock</label>
+              <input 
+                type="number" 
+                class="form-control" 
+                [(ngModel)]="productoForm.stock"
+                name="stock"
+                placeholder="0.00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Stock Mínimo</label>
+              <input 
+                type="number" 
+                class="form-control" 
+                [(ngModel)]="productoForm.stockMinimo"
+                name="stockMinimo"
+                placeholder="0.00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha de Vencimiento</label>
+              <input 
+                type="date" 
+                class="form-control" 
+                [(ngModel)]="productoForm.fechaVencimiento"
+                name="fechaVencimiento"
+                placeholder="dd/mm/aaaa">
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-guardar" (click)="guardarProducto()">
+           Guardar Producto
+        </button>
+        <button class="btn-cancelar" (click)="cerrarModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
