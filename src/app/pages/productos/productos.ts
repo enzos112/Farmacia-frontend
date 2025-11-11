@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, NgFor, NgIf, NgClass } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Producto } from '../../models/producto';
 
 @Component({
   selector: 'app-productos',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgFor, NgIf, NgClass],
+  imports: [CommonModule, FormsModule],
   templateUrl: './productos.html',
   styleUrls: ['./productos.css']
 })
@@ -25,10 +25,69 @@ export class ProductosComponent implements OnInit {
   productos: Producto[] = [];
   productosFiltrados: Producto[] = [];
   
-  // Estados
+  // Estado de carga
   isLoading: boolean = false;
+  
+  // Categorías disponibles
+  categorias: string[] = [
+    'Analgésicos y Antiinflamatorios',
+    'Antibióticos',
+    'Antigripales y Antialérgicos',
+    'Vitaminas y Suplementos',
+    'Cuidado Gástrico',
+    'Cuidado Personal e Higiene',
+    'Primeros Auxilios',
+    'Cuidado del Bebé',
+    'Equipos Médicos',
+    'Cosméticos y Belleza',
+    'Medicamentos'
+  ];
+  
+  // Estados
   showModal: boolean = false;
   modoEdicion: boolean = false;
+  showReporteModal: boolean = false;
+  showCategoriaModal: boolean = false;
+  showUnidadModal: boolean = false;
+  showAlertModal: boolean = false;
+  
+  // Mensaje de alerta
+  alertMessage: string = '';
+  alertTitle: string = 'Notificación';
+  
+  // Datos del reporte
+  productosSinStock: Producto[] = [];
+  productosStockBajo: Producto[] = [];
+  
+  // Formularios
+  categoriaForm: any = {
+    nombre: ''
+  };
+  
+  unidadForm: any = {
+    nombre: '',
+    simbolo: ''
+  };
+  
+  modoEdicionCategoria: boolean = false;
+  modoEdicionUnidad: boolean = false;
+
+  /**
+   * Muestra un mensaje de alerta personalizado
+   */
+  mostrarAlerta(mensaje: string, titulo: string = 'Notificación') {
+    this.alertMessage = mensaje;
+    this.alertTitle = titulo;
+    this.showAlertModal = true;
+  }
+
+  /**
+   * Cierra el modal de alerta
+   */
+  cerrarAlerta() {
+    this.showAlertModal = false;
+    this.alertMessage = '';
+  }
   
   // Formulario de producto
   productoForm: any = {
@@ -38,19 +97,6 @@ export class ProductosComponent implements OnInit {
     stock: 0
   };
 
-  // Categorías disponibles (para mostrar en la tabla)
-  categorias: string[] = [
-    'Analgésicos y Antiinflamatorios',
-    'Antibióticos',
-    'Antigripales y Antialérgicos',
-    'Cosméticos y Belleza',
-    'Cuidado del Bebé',
-    'Cuidado Gástrico',
-    'Cuidado Personal e Higiene',
-    'Equipos Médicos',
-    'Primeros Auxilios',
-    'Vitaminas y Suplementos'
-  ];
 
   ngOnInit() {
     // Cargar datos de prueba
@@ -71,13 +117,13 @@ export class ProductosComponent implements OnInit {
       { idProducto: 7,  nombre: 'Crema para escaldaduras Desitin',     descripcion: 'Cuidado de la piel del bebé',                 stock: 49.00,  precioVenta: 21.50 },
       { idProducto: 8,  nombre: 'Curitas Clásicas',                    descripcion: 'Apósito adhesivo para pequeñas heridas',      stock: 100.00, precioVenta: 4.00 },
       { idProducto: 9,  nombre: 'Diclofenaco Gel 1%',                  descripcion: 'Gel tópico antiinflamatorio',                 stock: 25.00,  precioVenta: 15.00 },
-      { idProducto: 10, nombre: 'Dolocordralan',                       descripcion: 'Analgésico/antiinflamatorio',                 stock: 6.00,   precioVenta: 4.50 },
-      { idProducto: 11, nombre: 'Don gripa',                           descripcion: 'Antigripal',                                  stock: -1.00,  precioVenta: 1.50 },
+      { idProducto: 10, nombre: 'Dolocordralan',                       descripcion: 'Analgésico/antiinflamatorio',                 stock: 0.00,   precioVenta: 4.50 },
+      { idProducto: 11, nombre: 'Don gripa',                           descripcion: 'Antigripal',                                  stock: 0.00,  precioVenta: 1.50 },
       { idProducto: 12, nombre: 'Gripa',                               descripcion: 'Analgésico para síntomas de gripe',           stock: 6.00,   precioVenta: 12.00 },
       { idProducto: 13, nombre: 'Ibuprofeno 400mg',                    descripcion: 'Antiinflamatorio no esteroideo (AINE)',       stock: 27.00,  precioVenta: 2.00 },
       { idProducto: 14, nombre: 'Jabón Antibacterial Protex',          descripcion: 'Cuidado e higiene personal',                  stock: 20.00,  precioVenta: 4.00 },
       { idProducto: 15, nombre: 'Loratadina 10mg',                     descripcion: 'Antialérgico',                                stock: 500.00, precioVenta: 0.50 },
-      { idProducto: 16, nombre: 'Naproxeno sodico',                    descripcion: 'Analgésico y antiinflamatorio (AINE)',        stock: -1.00,  precioVenta: 5.00 }
+      { idProducto: 16, nombre: 'Naproxeno sodico',                    descripcion: 'Analgésico y antiinflamatorio (AINE)',        stock: 0.00,  precioVenta: 5.00 }
     ];
     this.productosFiltrados = [...this.productos];
   }
@@ -185,12 +231,14 @@ export class ProductosComponent implements OnInit {
   guardarProducto() {
     // Validación básica
     if (!this.productoForm.nombre.trim()) {
-      alert('El nombre del producto es obligatorio');
+      this.cerrarModal();
+      this.mostrarAlerta('El nombre del producto es obligatorio', 'Validación');
       return;
     }
 
     if (this.productoForm.precioVenta <= 0) {
-      alert('El precio debe ser mayor a 0');
+      this.cerrarModal();
+      this.mostrarAlerta('El precio debe ser mayor a 0', 'Validación');
       return;
     }
 
@@ -205,7 +253,9 @@ export class ProductosComponent implements OnInit {
           stock: this.productoForm.stock,
           precioVenta: this.productoForm.precioVenta
         };
-        alert(`Producto "${this.productoForm.nombre}" actualizado exitosamente!`);
+        this.buscarProductos();
+        this.cerrarModal();
+        this.mostrarAlerta(`Producto "${this.productoForm.nombre}" actualizado exitosamente!`, 'Éxito');
       }
     } else {
       // Crear nuevo producto
@@ -219,64 +269,36 @@ export class ProductosComponent implements OnInit {
       };
       
       this.productos.push(nuevoProducto);
-      alert(`Producto "${this.productoForm.nombre}" agregado exitosamente!`);
+      this.buscarProductos();
+      this.cerrarModal();
+      this.mostrarAlerta(`Producto "${this.productoForm.nombre}" agregado exitosamente!`, 'Éxito');
     }
-
-    this.buscarProductos();
-    this.cerrarModal();
   }
 
   /**
    * Genera un reporte de productos con stock bajo
    */
   reporteStockBajo() {
-    const productosSinStock = this.productos.filter(p => p.stock === 0);
-    const productosStockBajo = this.productos.filter(p => p.stock > 0 && p.stock <= 10);
+    this.productosSinStock = this.productos.filter(p => p.stock <= 0);
+    this.productosStockBajo = this.productos.filter(p => p.stock > 0 && p.stock <= 10);
     
-    let reporte = 'REPORTE DE STOCK BAJO\n';
-    reporte += '═'.repeat(50) + '\n\n';
-    
-    // Productos sin stock
-    reporte += `PRODUCTOS SIN STOCK (${productosSinStock.length}):\n`;
-    reporte += '─'.repeat(50) + '\n';
-    if (productosSinStock.length > 0) {
-      productosSinStock.forEach((p, index) => {
-        reporte += `${index + 1}. ${p.nombre}\n`;
-        reporte += `   Precio: $${p.precioVenta.toFixed(2)}\n`;
-      });
-    } else {
-      reporte += '   ✓ No hay productos sin stock\n';
-    }
-    
-    reporte += '\n';
-    
-    // Productos con stock bajo
-    reporte += `PRODUCTOS CON STOCK BAJO (${productosStockBajo.length}):\n`;
-    reporte += '─'.repeat(50) + '\n';
-    if (productosStockBajo.length > 0) {
-      productosStockBajo.forEach((p, index) => {
-        reporte += `${index + 1}. ${p.nombre}\n`;
-        reporte += `   Stock actual: ${p.stock} unidades\n`;
-        reporte += `   Precio: $${p.precioVenta.toFixed(2)}\n`;
-      });
-    } else {
-      reporte += '   ✓ No hay productos con stock bajo\n';
-    }
-    
-    reporte += '\n' + '═'.repeat(50) + '\n';
-    reporte += `TOTAL A REABASTECER: ${productosSinStock.length + productosStockBajo.length} productos`;
-    
-    // Mostrar reporte
-    alert(reporte);
-    
-    // Opcional: filtrar automáticamente los productos con problemas
-    if (productosSinStock.length > 0 || productosStockBajo.length > 0) {
-      const mostrarFiltrados = confirm('¿Desea filtrar los productos con stock bajo?');
-      if (mostrarFiltrados) {
-        this.stockFilter = 'stock-bajo';
-        this.buscarProductos();
-      }
-    }
+    this.showReporteModal = true;
+  }
+
+  /**
+   * Cierra el modal de reporte
+   */
+  cerrarReporteModal() {
+    this.showReporteModal = false;
+  }
+
+  /**
+   * Filtra productos con stock bajo desde el reporte
+   */
+  filtrarStockBajo() {
+    this.stockFilter = 'stock-bajo';
+    this.buscarProductos();
+    this.cerrarReporteModal();
   }
 
   /**
@@ -301,7 +323,7 @@ export class ProductosComponent implements OnInit {
     if (confirm(`¿Está seguro de eliminar el producto "${producto.nombre}"?`)) {
       this.productos = this.productos.filter(p => p.idProducto !== producto.idProducto);
       this.buscarProductos();
-      alert(`Producto "${producto.nombre}" eliminado exitosamente!`);
+      this.mostrarAlerta(`Producto "${producto.nombre}" eliminado exitosamente!`, 'Éxito');
     }
   }
 
@@ -330,53 +352,89 @@ export class ProductosComponent implements OnInit {
     this.mostrarCategorias = false;
     this.mostrarUnidades = false;
     this.pageTitle = 'Listado de Productos';
+    this.showReporteModal = false;
+    this.searchTerm = '';
+    this.stockFilter = '';
+    this.buscarProductos();
   }
 
   /**
-   * Datos de categorías (Nombre y Símbolo)
+   * Datos de categorías para clasificación y gestión
    */
-  categoriasGestion: Array<{ nombre: string; simbolo: string }> = [
-    { nombre: 'Analgésicos y Antiinflamatorios', simbolo: '' },
-    { nombre: 'Antibióticos', simbolo: '' },
-    { nombre: 'Antigripales y Antialérgicos', simbolo: '' },
-    { nombre: 'Vitaminas y Suplementos', simbolo: '' },
-    { nombre: 'Cuidado Gástrico', simbolo: '' },
-    { nombre: 'Cuidado Personal e Higiene', simbolo: '' },
-    { nombre: 'Primeros Auxilios', simbolo: '' },
-    { nombre: 'Cuidado del Bebé', simbolo: '' },
-    { nombre: 'Equipos Médicos', simbolo: '' },
-    { nombre: 'Cosméticos y Belleza', simbolo: '' },
+  categoriasGestion: Array<{ nombre: string }> = [
+    { nombre: 'Analgésicos y Antiinflamatorios' },
+    { nombre: 'Antibióticos' },
+    { nombre: 'Antigripales y Antialérgicos' },
+    { nombre: 'Vitaminas y Suplementos' },
+    { nombre: 'Cuidado Gástrico' },
+    { nombre: 'Cuidado Personal e Higiene' },
+    { nombre: 'Primeros Auxilios' },
+    { nombre: 'Cuidado del Bebé' },
+    { nombre: 'Equipos Médicos' },
+    { nombre: 'Cosméticos y Belleza' },
   ];
 
-  editarCategoria(cat: { nombre: string; simbolo: string }) {
-    const nuevoNombre = prompt('Editar categoría', cat.nombre);
-    if (nuevoNombre === null) return; // cancelado
-    const nombreLimpio = nuevoNombre.trim();
-    if (!nombreLimpio) return;
-    // Actualizar y notificar a la vista
-    const idx = this.categoriasGestion.indexOf(cat);
-    if (idx > -1) {
-      this.categoriasGestion[idx] = { ...cat, nombre: nombreLimpio };
-      this.categoriasGestion = [...this.categoriasGestion];
-    }
+  editarCategoria(cat: { nombre: string }) {
+    this.modoEdicionCategoria = true;
+    this.categoriaForm = { 
+      nombre: cat.nombre,
+      categoriaOriginal: cat
+    };
+    this.showCategoriaModal = true;
   }
 
-  eliminarCategoria(cat: { nombre: string; simbolo: string }) {
+  eliminarCategoria(cat: { nombre: string }) {
     if (confirm(`¿Eliminar la categoría "${cat.nombre}"?`)) {
       this.categoriasGestion = this.categoriasGestion.filter(c => c !== cat);
-      alert('Categoría eliminada');
+      this.mostrarAlerta('Categoría eliminada', 'Éxito');
     }
   }
 
   /**
-   * Crear nueva categoría (mock)
+   * Crear nueva categoría
    */
   nuevoCategoria() {
-    const nombre = prompt('Nombre de la nueva categoría:');
-    if (!nombre || !nombre.trim()) return;
-    // Ya no se requiere símbolo para categorías
-    this.categoriasGestion.push({ nombre: nombre.trim(), simbolo: '' });
-    alert(' Categoría agregada');
+    this.modoEdicionCategoria = false;
+    this.categoriaForm = { nombre: '' };
+    this.showCategoriaModal = true;
+  }
+
+  /**
+   * Guarda la categoría (crear o editar)
+   */
+  guardarCategoria() {
+    const nombreLimpio = this.categoriaForm.nombre.trim();
+    
+    if (!nombreLimpio) {
+      this.cerrarCategoriaModal();
+      this.mostrarAlerta('El nombre de la categoría es obligatorio', 'Validación');
+      return;
+    }
+
+    if (this.modoEdicionCategoria) {
+      // Editar categoría existente
+      const idx = this.categoriasGestion.indexOf(this.categoriaForm.categoriaOriginal);
+      if (idx > -1) {
+        this.categoriasGestion[idx] = { ...this.categoriaForm.categoriaOriginal, nombre: nombreLimpio };
+        this.categoriasGestion = [...this.categoriasGestion];
+        this.cerrarCategoriaModal();
+        this.mostrarAlerta('Categoría actualizada exitosamente', 'Éxito');
+      }
+    } else {
+      // Nueva categoría
+      this.categoriasGestion.push({ nombre: nombreLimpio });
+      this.cerrarCategoriaModal();
+      this.mostrarAlerta('Categoría agregada exitosamente', 'Éxito');
+    }
+  }
+
+  /**
+   * Cierra el modal de categoría
+   */
+  cerrarCategoriaModal() {
+    this.showCategoriaModal = false;
+    this.categoriaForm = { nombre: '' };
+    this.modoEdicionCategoria = false;
   }
 
   /**
@@ -392,34 +450,70 @@ export class ProductosComponent implements OnInit {
   ];
 
   editarUnidad(u: { nombre: string; simbolo: string }) {
-    const nombre = prompt('Editar nombre de unidad', u.nombre);
-    if (nombre === null) return;
-    const nombreLimpio = nombre.trim();
-    if (!nombreLimpio) return;
-
-    const simbolo = prompt('Editar símbolo (abreviatura)', u.simbolo || '');
-    if (simbolo === null) return;
-    const simboloLimpio = simbolo.trim().toUpperCase();
-
-    const idx = this.unidadesGestion.indexOf(u);
-    if (idx > -1) {
-      this.unidadesGestion[idx] = { ...u, nombre: nombreLimpio, simbolo: simboloLimpio };
-      this.unidadesGestion = [...this.unidadesGestion];
-    }
+    this.modoEdicionUnidad = true;
+    this.unidadForm = {
+      nombre: u.nombre,
+      simbolo: u.simbolo,
+      unidadOriginal: u
+    };
+    this.showUnidadModal = true;
   }
 
   eliminarUnidad(u: { nombre: string; simbolo: string }) {
     if (confirm(`¿Eliminar la unidad "${u.nombre}"?`)) {
       this.unidadesGestion = this.unidadesGestion.filter(x => x !== u);
-      alert('Unidad eliminada');
+      this.mostrarAlerta('Unidad eliminada', 'Éxito');
     }
   }
 
   nuevaUnidad() {
-    const nombre = prompt('Nombre de la nueva unidad:');
-    if (!nombre || !nombre.trim()) return;
-    const simbolo = prompt('Símbolo (abreviatura):') || nombre.substring(0,3).toUpperCase();
-    this.unidadesGestion.push({ nombre: nombre.trim(), simbolo: simbolo.trim().toUpperCase() });
-    alert('Unidad agregada');
+    this.modoEdicionUnidad = false;
+    this.unidadForm = { nombre: '', simbolo: '' };
+    this.showUnidadModal = true;
+  }
+
+  /**
+   * Guarda la unidad (crear o editar)
+   */
+  guardarUnidad() {
+    const nombreLimpio = this.unidadForm.nombre.trim();
+    const simboloLimpio = this.unidadForm.simbolo.trim().toUpperCase();
+
+    if (!nombreLimpio) {
+      this.cerrarUnidadModal();
+      this.mostrarAlerta('El nombre de la unidad es obligatorio', 'Validación');
+      return;
+    }
+
+    if (!simboloLimpio) {
+      this.cerrarUnidadModal();
+      this.mostrarAlerta('El símbolo de la unidad es obligatorio', 'Validación');
+      return;
+    }
+
+    if (this.modoEdicionUnidad) {
+      // Editar unidad existente
+      const idx = this.unidadesGestion.indexOf(this.unidadForm.unidadOriginal);
+      if (idx > -1) {
+        this.unidadesGestion[idx] = { nombre: nombreLimpio, simbolo: simboloLimpio };
+        this.unidadesGestion = [...this.unidadesGestion];
+        this.cerrarUnidadModal();
+        this.mostrarAlerta('Unidad actualizada exitosamente', 'Éxito');
+      }
+    } else {
+      // Nueva unidad
+      this.unidadesGestion.push({ nombre: nombreLimpio, simbolo: simboloLimpio });
+      this.cerrarUnidadModal();
+      this.mostrarAlerta('Unidad agregada exitosamente', 'Éxito');
+    }
+  }
+
+  /**
+   * Cierra el modal de unidad
+   */
+  cerrarUnidadModal() {
+    this.showUnidadModal = false;
+    this.unidadForm = { nombre: '', simbolo: '' };
+    this.modoEdicionUnidad = false;
   }
 }
