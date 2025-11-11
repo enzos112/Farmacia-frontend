@@ -1,6 +1,6 @@
-<mat-sidenav-container class="app-layout-container">
+<mat-sidenav-container class="app-layout-container" [class.sidebar-collapsed]="!sidenavOpened" [class.sidebar-expanded]="sidenavOpened">
 
-  <mat-sidenav #sidenav mode="side" opened class="app-sidenav">
+  <mat-sidenav #sidenav mode="side" [opened]="sidenavOpened" (openedChange)="sidenavOpened = $event" class="app-sidenav">
     
     <div class="sidenav-header-logo">
       <img [src]="logoSmallImageUrl" alt="Logo MarcaFarmacia" class="app-logo-small">
@@ -8,9 +8,9 @@
     </div>
 
     <mat-nav-list class="app-nav-list">
-      <a mat-list-item 
-         *ngFor="let item of menuItems" 
-         [routerLink]="item.link" 
+      <a mat-list-item
+         *ngFor="let item of menuItems"
+         [routerLink]="item.link"
          routerLinkActive="active-link"
          class="app-nav-item">
         <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
@@ -25,10 +25,10 @@
     </div>
   </mat-sidenav>
 
-  <mat-sidenav-content class="app-main-content">
+  <mat-sidenav-content class="app-main-content" [class.content-expanded]="!sidenavOpened" [class.content-with-sidebar]="sidenavOpened">
 
     <mat-toolbar color="primary" class="app-toolbar">
-      <button mat-icon-button (click)="sidenav.toggle()" class="menu-button">
+      <button mat-icon-button (click)="sidenav.toggle(); onSidenavToggle()" class="menu-button">
         <mat-icon>menu</mat-icon>
       </button>
       <span class="app-toolbar-title">Sistema de Gestión de Farmacia</span>

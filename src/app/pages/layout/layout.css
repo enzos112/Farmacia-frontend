@@ -123,12 +123,39 @@
 
 /* --- Contenido Principal --- */
 .app-main-content {
-  padding: 20px;
+  padding: 0;
+  transition: margin-left 0.3s ease-in-out;
 }
 
 .app-page-content {
-  padding: 20px;
+  padding: 0;
   background-color: #f5f5f5; /* Fondo del contenido de la página */
-  min-height: calc(100vh - 64px - 40px); /* Altura mínima: pantalla - toolbar - padding */
-  border-radius: 8px; /* Bordes redondeados para el contenido */
-} 
+  min-height: calc(100vh - 64px); /* Altura mínima: pantalla - toolbar */
+  overflow-x: hidden;
+}
+
+/* Adaptación del contenido según el estado del sidebar */
+.content-with-sidebar {
+  margin-left: 0;
+}
+
+.content-expanded {
+  margin-left: 0;
+}
+
+/* Responsive behavior for sidebar */
+@media (max-width: 768px) {
+  .app-sidenav {
+    width: 100%;
+    max-width: 260px;
+  }
+  
+  .app-main-content {
+    margin-left: 0 !important;
+  }
+  
+  .content-with-sidebar,
+  .content-expanded {
+    margin-left: 0 !important;
+  }
+}

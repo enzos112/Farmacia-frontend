@@ -39,8 +39,15 @@ export class LayoutComponent {
   // Agrega esta línea para la ruta de tu logo
   logoSmallImageUrl: string = 'images/logo_botica_marcafar.jpg'; // Versión más pequeña o el mismo, pero lo manejaremos con CSS
 
+  // Estado del sidebar
+  sidenavOpened: boolean = true;
+
   logout() {
     this.authService.logout();
+  }
+
+  onSidenavToggle() {
+    this.sidenavOpened = !this.sidenavOpened;
   }
 
   menuItems = [

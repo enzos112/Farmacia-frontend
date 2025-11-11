@@ -1,1 +1,434 @@
-<p>ventas works!</p>
+<div class="ventas-container">
+  <!-- Header -->
+  <div class="ventas-header">
+    <div>
+      <p class="welcome-text">GESTIÓN DE</p>
+      <h1 class="page-title">Ventas</h1>
+    </div>
+    <button class="btn-nueva-venta" (click)="abrirModalNuevaVenta()">Nueva Venta</button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="ventas-content">
+    <!-- Left Section -->
+    <div class="left-section">
+      <!-- Estadísticas de ventas -->
+      <div class="card estadisticas-ventas">
+        <h3>ESTADÍSTICAS DE VENTAS</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-valor">{{ ventaStats.totalVentas }}</div>
+            <div class="stat-label">Total de ventas</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-valor">{{ ventaStats.ventasHoy }}</div>
+            <div class="stat-label">Ventas hoy</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-valor">{{ ventaStats.ventasPendientes }}</div>
+            <div class="stat-label">Ventas pendientes</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-valor">S/. {{ ventaStats.promedioVenta.toFixed(2) }}</div>
+            <div class="stat-label">Promedio por venta</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de ventas -->
+      <div class="card lista-ventas">
+        <div class="lista-header">
+          <h3>LISTA DE VENTAS</h3>
+          <div class="controles-lista">
+            <div class="search-container">
+              <input
+                type="text"
+                class="search-input"
+                placeholder="Buscar por número, cliente o estado..."
+                [(ngModel)]="searchTerm"
+                (input)="buscarVentas()"
+              >
+              <mat-icon class="search-icon">search</mat-icon>
+            </div>
+            <select class="filtro-estado" [(ngModel)]="filtroEstado" (change)="filtrarPorEstado()" aria-label="Filtrar por estado">
+              <option value="">Todos los estados</option>
+              <option value="completada">Completadas</option>
+              <option value="pendiente">Pendientes</option>
+              <option value="cancelada">Canceladas</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="table-container">
+          <table class="ventas-table">
+            <thead>
+              <tr>
+                <th>Número</th>
+                <th>Cliente</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Método Pago</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let venta of ventasFiltradas" class="venta-row">
+                <td class="venta-numero">
+                  <div class="numero-venta">{{ venta.numeroVenta }}</div>
+                  <div class="vendedor">{{ venta.vendedorNombre }}</div>
+                </td>
+                <td class="venta-cliente">
+                  <div class="cliente-nombre">{{ venta.clienteNombre || 'Cliente Ocasional' }}</div>
+                  <div class="cliente-dni">{{ venta.clienteDni || 'Sin DNI' }}</div>
+                </td>
+                <td class="venta-fecha">
+                  <div class="fecha">{{ venta.fechaVenta | date:'dd/MM/yyyy' }}</div>
+                  <div class="hora">{{ venta.fechaVenta | date:'HH:mm' }}</div>
+                </td>
+                <td class="venta-total">S/. {{ venta.total.toFixed(2) }}</td>
+                <td class="venta-metodo">
+                  <span class="metodo-badge" [class]="'metodo-' + venta.metodoPago">
+                    {{ getMetodoPagoLabel(venta.metodoPago) }}
+                  </span>
+                </td>
+                <td class="venta-estado">
+                  <span class="estado-badge" [class]="'estado-' + venta.estado">
+                    {{ getEstadoLabel(venta.estado) }}
+                  </span>
+                </td>
+                <td class="venta-acciones">
+                  <button class="btn-accion btn-ver" (click)="verDetalleVenta(venta)" title="Ver detalle">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                  <button class="btn-accion btn-editar" (click)="editarVenta(venta)" title="Editar"
+                          [disabled]="venta.estado === 'cancelada'">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button class="btn-accion btn-cancelar" (click)="cancelarVenta(venta.id!)" title="Cancelar"
+                          [disabled]="venta.estado === 'cancelada' || venta.estado === 'completada'">
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <div *ngIf="ventasFiltradas.length === 0" class="no-results">
+            <p>No se encontraron ventas</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Section -->
+    <div class="right-section">
+      <!-- Ingresos del mes -->
+      <div class="card ingresos-mes">
+        <div class="ingresos-header">
+          <div>
+            <h3>INGRESOS DEL MES</h3>
+            <p class="mes-nombre">{{ mesActual }}</p>
+          </div>
+          <select class="mes-selector" [(ngModel)]="mesSeleccionado" (change)="onMesChange($event)" aria-label="Seleccionar mes">
+            <option *ngFor="let mes of mesesDelAnio" [value]="mes">{{ mes }}</option>
+          </select>
+        </div>
+        <div class="ingresos-total">S/. {{ ventaStats.ingresosTotales.toLocaleString('es-PE') }}</div>
+        <div class="ingresos-detalle">
+          <div class="detalle-item">
+            <span class="detalle-label">Ventas del mes:</span>
+            <span class="detalle-valor">{{ ventaStats.ventasMes }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Productos más vendidos -->
+      <div class="card productos-vendidos">
+        <div class="productos-header">
+          <h3>PRODUCTOS MÁS VENDIDOS</h3>
+          <p class="productos-subtitle">Este mes</p>
+        </div>
+        <ul class="productos-list">
+          <li class="producto-item" *ngFor="let producto of productosVendidos; let i = index">
+            <div class="producto-row">
+              <span class="producto-index">{{ i + 1 }}</span>
+              <div class="producto-info">
+                <div class="producto-nombre">{{ producto.nombre }}</div>
+                <div class="producto-meta">
+                  <span class="producto-cantidad">{{ producto.cantidad }} unid.</span>
+                  <span class="producto-ingresos">S/. {{ producto.ingresos.toFixed(2) }}</span>
+                </div>
+                <div class="progress">
+                  <div class="progress-bar" [style.width.%]="(producto.cantidad / maxCantidadVendida) * 100"></div>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Actividad reciente -->
+      <div class="card actividad-reciente">
+        <h3>ACTIVIDAD RECIENTE</h3>
+        <div class="actividad-list">
+          <div class="actividad-item" *ngFor="let actividad of actividadReciente">
+            <div class="actividad-icon"><mat-icon>attach_money</mat-icon></div>
+            <div class="actividad-info">
+              <div class="actividad-texto">{{ actividad.texto }}</div>
+              <div class="actividad-fecha">{{ actividad.fecha | date:'dd/MM/yyyy HH:mm' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para nueva venta -->
+<div class="modal-overlay" *ngIf="mostrarModalVenta" (click)="cerrarModalVenta()">
+  <div class="modal-content modal-venta" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ ventaEditando ? 'Editar Venta' : 'Nueva Venta' }}</h2>
+      <button class="btn-cerrar" (click)="cerrarModalVenta()"><mat-icon>close</mat-icon></button>
+    </div>
+    
+    <div class="venta-form">
+      <!-- Información del cliente -->
+      <div class="form-section">
+        <h4>Información del Cliente</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cliente</label>
+            <div class="cliente-selector">
+              <input
+                type="text"
+                class="form-input"
+                placeholder="Buscar cliente por nombre o DNI..."
+                [(ngModel)]="busquedaCliente"
+                (input)="buscarClientesModal()"
+                aria-label="Buscar cliente"
+              >
+              <div class="clientes-dropdown" *ngIf="clientesEncontrados.length > 0">
+                <div class="cliente-option" *ngFor="let cliente of clientesEncontrados" 
+                     (click)="seleccionarCliente(cliente)">
+                  <div class="cliente-nombre">{{ cliente.nombre }} {{ cliente.apellido }}</div>
+                  <div class="cliente-dni">{{ cliente.dni }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cliente-seleccionado" *ngIf="clienteSeleccionado">
+          <strong>Cliente:</strong> {{ clienteSeleccionado.nombre }} {{ clienteSeleccionado.apellido }} - {{ clienteSeleccionado.dni }}
+          <button class="btn-quitar-cliente" (click)="quitarCliente()">×</button>
+        </div>
+      </div>
+
+      <!-- Productos -->
+      <div class="form-section">
+        <h4>Productos</h4>
+        <div class="producto-selector">
+          <input
+            type="text"
+            class="form-input"
+            placeholder="Buscar producto..."
+            [(ngModel)]="busquedaProducto"
+            (input)="buscarProductosModal()"
+            aria-label="Buscar producto"
+          >
+          <div class="productos-dropdown" *ngIf="productosEncontrados.length > 0">
+            <div class="producto-option" *ngFor="let producto of productosEncontrados" 
+                 (click)="agregarProducto(producto)">
+              <div class="producto-nombre">{{ producto.nombre }}</div>
+              <div class="producto-precio">S/. {{ producto.precio.toFixed(2) }} - Stock: {{ producto.stock }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lista de productos seleccionados -->
+        <div class="productos-seleccionados" *ngIf="detallesVenta.length > 0">
+          <table class="productos-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Precio</th>
+                <th>Cantidad</th>
+                <th>Subtotal</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let detalle of detallesVenta; let i = index">
+                <td>{{ detalle.productoNombre }}</td>
+                <td>S/. {{ detalle.precioUnitario.toFixed(2) }}</td>
+                <td>
+                  <input
+                    type="number"
+                    min="1"
+                    class="cantidad-input"
+                    [(ngModel)]="detalle.cantidad"
+                    (change)="actualizarSubtotal(i)"
+                    aria-label="Cantidad"
+                  >
+                </td>
+                <td>S/. {{ detalle.subtotal.toFixed(2) }}</td>
+                <td>
+                  <button class="btn-quitar" (click)="quitarProducto(i)"><mat-icon>delete</mat-icon></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Totales y método de pago -->
+      <div class="form-section">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Método de Pago</label>
+            <select class="form-select" [(ngModel)]="ventaForm.metodoPago" aria-label="Método de pago">
+              <option value="efectivo">Efectivo</option>
+              <option value="tarjeta">Tarjeta</option>
+              <option value="transferencia">Transferencia</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="totales-venta">
+          <div class="total-row">
+            <span>Subtotal:</span>
+            <span>S/. {{ totalesVenta.subtotal.toFixed(2) }}</span>
+          </div>
+          <div class="total-row">
+            <span>IGV (18%):</span>
+            <span>S/. {{ totalesVenta.igv.toFixed(2) }}</span>
+          </div>
+          <div class="total-row total-final">
+            <span>Total:</span>
+            <span>S/. {{ totalesVenta.total.toFixed(2) }}</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Observaciones</label>
+          <textarea 
+            class="form-textarea"
+            [(ngModel)]="ventaForm.observaciones"
+            rows="3"
+            placeholder="Observaciones adicionales..."
+          ></textarea>
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <button type="button" class="btn-cancelar" (click)="cerrarModalVenta()">Cancelar</button>
+        <button type="button" class="btn-guardar" (click)="guardarVenta()" 
+                [disabled]="detallesVenta.length === 0">
+          {{ ventaEditando ? 'Actualizar' : 'Procesar Venta' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para cancelar venta -->
+<div class="modal-overlay" *ngIf="mostrarModalCancelar" (click)="cerrarModalCancelar()">
+  <div class="modal-content" style="max-width: 400px;" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Cancelar Venta</h2>
+      <button class="btn-cerrar" (click)="cerrarModalCancelar()"><mat-icon>close</mat-icon></button>
+    </div>
+
+    <div style="padding: 20px;">
+      <p style="margin-bottom: 16px; color: #666;">¿Está seguro de cancelar la venta <strong>{{ ventaCancelar?.numeroVenta }}</strong>?</p>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Motivo de cancelación:</label>
+        <textarea
+          [(ngModel)]="motivoCancelacion"
+          placeholder="Ingrese el motivo de la cancelación..."
+          style="width: 100%; padding: 10px; border: 1px solid #e1e5e9; border-radius: 6px; font-family: inherit; resize: vertical; min-height: 80px;"
+          maxlength="500"
+        ></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn-cancelar" (click)="cerrarModalCancelar()">Cancelar</button>
+        <button class="btn-guardar" (click)="confirmarCancelacion()" [disabled]="!motivoCancelacion.trim()">Confirmar Cancelación</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para ver detalle de venta -->
+<div class="modal-overlay" *ngIf="mostrarModalDetalle" (click)="cerrarModalDetalle()">
+  <div class="modal-content modal-detalle" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Detalle de Venta</h2>
+      <button class="btn-cerrar" (click)="cerrarModalDetalle()"><mat-icon>close</mat-icon></button>
+    </div>
+
+    <div class="detalle-venta" *ngIf="ventaDetalle">
+      <div class="detalle-header">
+        <div class="detalle-info">
+          <h3>{{ ventaDetalle.numeroVenta }}</h3>
+          <p>{{ ventaDetalle.fechaVenta | date:'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+        <div class="detalle-estado">
+          <span class="estado-badge" [class]="'estado-' + ventaDetalle.estado">
+            {{ getEstadoLabel(ventaDetalle.estado) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="detalle-cliente" *ngIf="ventaDetalle.clienteNombre">
+        <h4>Cliente</h4>
+        <p><strong>{{ ventaDetalle.clienteNombre }}</strong></p>
+        <p *ngIf="ventaDetalle.clienteDni">DNI: {{ ventaDetalle.clienteDni }}</p>
+      </div>
+
+      <div class="detalle-productos">
+        <h4>Productos</h4>
+        <table class="detalle-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Precio Unit.</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let detalle of ventaDetalle.detalles">
+              <td>{{ detalle.productoNombre }}</td>
+              <td>{{ detalle.cantidad }}</td>
+              <td>S/. {{ detalle.precioUnitario.toFixed(2) }}</td>
+              <td>S/. {{ detalle.subtotal.toFixed(2) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="detalle-totales">
+        <div class="total-row">
+          <span>Subtotal:</span>
+          <span>S/. {{ ventaDetalle.subtotal.toFixed(2) }}</span>
+        </div>
+        <div class="total-row">
+          <span>IGV:</span>
+          <span>S/. {{ ventaDetalle.igv.toFixed(2) }}</span>
+        </div>
+        <div class="total-row total-final">
+          <span>Total:</span>
+          <span>S/. {{ ventaDetalle.total.toFixed(2) }}</span>
+        </div>
+      </div>
+
+      <div class="detalle-pago">
+        <p><strong>Método de pago:</strong> {{ getMetodoPagoLabel(ventaDetalle.metodoPago) }}</p>
+        <p *ngIf="ventaDetalle.observaciones"><strong>Observaciones:</strong> {{ ventaDetalle.observaciones }}</p>
+      </div>
+    </div>
+  </div>
+</div>

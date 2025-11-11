@@ -1,1 +1,241 @@
-<p>clientes works!</p>
+<div class="clientes-container">
+  <!-- Header -->
+  <div class="clientes-header">
+    <div>
+      <p class="welcome-text">GESTIÓN DE</p>
+      <h1 class="page-title">Clientes</h1>
+    </div>
+    <button class="btn-nuevo-cliente" (click)="abrirModalNuevoCliente()">Nuevo Cliente</button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="clientes-content">
+    <!-- Left Section -->
+    <div class="left-section">
+      <!-- Estadísticas de clientes -->
+      <div class="card estadisticas-clientes">
+        <h3>ESTADÍSTICAS DE CLIENTES</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-valor">{{ clienteStats.totalClientes }}</div>
+            <div class="stat-label">Total de clientes</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-valor">{{ clienteStats.clientesNuevos }}</div>
+            <div class="stat-label">Clientes nuevos (30 días)</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-valor">{{ clienteStats.clientesActivos }}</div>
+            <div class="stat-label">Clientes activos</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-valor">S/. {{ clienteStats.ventasTotales.toFixed(2) }}</div>
+            <div class="stat-label">Ventas totales</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de clientes -->
+      <div class="card lista-clientes">
+        <div class="lista-header">
+          <h3>LISTA DE CLIENTES</h3>
+          <div class="search-container">
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Buscar por nombre, DNI o email..."
+              [(ngModel)]="searchTerm"
+              (input)="buscarClientes()"
+            >
+            <mat-icon class="search-icon">search</mat-icon>
+          </div>
+        </div>
+        
+        <div class="table-container">
+          <table class="clientes-table">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>DNI</th>
+                <th>Contacto</th>
+                <th>Total Compras</th>
+                <th>Última Compra</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let cliente of clientesFiltrados" class="cliente-row">
+                <td class="cliente-info">
+                  <div class="cliente-avatar">{{ cliente.nombre.charAt(0) }}{{ cliente.apellido.charAt(0) }}</div>
+                  <div class="cliente-datos">
+                    <div class="cliente-nombre">{{ cliente.nombre }} {{ cliente.apellido }}</div>
+                    <div class="cliente-email">{{ cliente.email || 'Sin email' }}</div>
+                  </div>
+                </td>
+                <td class="cliente-dni">{{ cliente.dni }}</td>
+                <td class="cliente-contacto">
+                  <div class="telefono">{{ cliente.telefono || 'Sin teléfono' }}</div>
+                  <div class="direccion">{{ cliente.direccion || 'Sin dirección' }}</div>
+                </td>
+                <td class="cliente-compras">S/. {{ (cliente.totalCompras || 0).toFixed(2) }}</td>
+                <td class="cliente-ultima-compra">
+                  {{ cliente.ultimaCompra ? (cliente.ultimaCompra | date:'dd/MM/yyyy') : 'Sin compras' }}
+                </td>
+                <td class="cliente-estado">
+                  <span class="estado-badge" [class]="'estado-' + cliente.estado">
+                    {{ cliente.estado === 'activo' ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td class="cliente-acciones">
+                  <button class="btn-accion btn-editar" (click)="editarCliente(cliente)" title="Editar">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button class="btn-accion btn-eliminar" (click)="eliminarCliente(cliente.id!)" title="Eliminar">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <div *ngIf="clientesFiltrados.length === 0" class="no-results">
+            <p>No se encontraron clientes</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Section -->
+    <div class="right-section">
+      <!-- Top clientes -->
+      <div class="card top-clientes">
+        <div class="top-header">
+          <h3>TOP CLIENTES</h3>
+          <p class="top-subtitle">Por total de compras</p>
+        </div>
+        <ul class="top-list">
+          <li class="top-item" *ngFor="let cliente of topClientes; let i = index">
+            <div class="top-row">
+              <span class="top-index">{{ i + 1 }}</span>
+              <div class="top-info">
+                <div class="top-nombre">{{ cliente.nombre }} {{ cliente.apellido }}</div>
+                <div class="top-meta">
+                  <span class="top-compras">S/. {{ (cliente.totalCompras || 0).toFixed(2) }}</span>
+                </div>
+                <div class="progress">
+                  <div class="progress-bar" [style.width.%]="((cliente.totalCompras || 0) / maxComprasTop) * 100"></div>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Actividad reciente -->
+      <div class="card actividad-reciente">
+        <h3>ACTIVIDAD RECIENTE</h3>
+        <div class="actividad-list">
+          <div class="actividad-item" *ngFor="let actividad of actividadReciente">
+            <div class="actividad-icon"><mat-icon>person</mat-icon></div>
+            <div class="actividad-info">
+              <div class="actividad-texto">{{ actividad.texto }}</div>
+              <div class="actividad-fecha">{{ actividad.fecha | date:'dd/MM/yyyy HH:mm' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para nuevo/editar cliente -->
+<div class="modal-overlay" *ngIf="mostrarModal" (click)="cerrarModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ clienteEditando ? 'Editar Cliente' : 'Nuevo Cliente' }}</h2>
+      <button class="btn-cerrar" (click)="cerrarModal()"><mat-icon>close</mat-icon></button>
+    </div>
+    
+    <form class="cliente-form" (ngSubmit)="guardarCliente()" #formRef="ngForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="nombre">Nombre *</label>
+          <input
+            type="text"
+            id="nombre"
+            name="nombre"
+            [(ngModel)]="clienteForm.nombre"
+            required
+            class="form-input"
+          >
+        </div>
+        <div class="form-group">
+          <label for="apellido">Apellido *</label>
+          <input
+            type="text"
+            id="apellido"
+            name="apellido"
+            [(ngModel)]="clienteForm.apellido"
+            required
+            class="form-input"
+          >
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="dni">DNI *</label>
+          <input
+            type="text"
+            id="dni"
+            name="dni"
+            [(ngModel)]="clienteForm.dni"
+            required
+            maxlength="8"
+            class="form-input"
+          >
+        </div>
+        <div class="form-group">
+          <label for="telefono">Teléfono</label>
+          <input
+            type="text"
+            id="telefono"
+            name="telefono"
+            [(ngModel)]="clienteForm.telefono"
+            class="form-input"
+          >
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          [(ngModel)]="clienteForm.email"
+          class="form-input"
+        >
+      </div>
+      
+      <div class="form-group">
+        <label for="direccion">Dirección</label>
+        <textarea
+          id="direccion"
+          name="direccion"
+          [(ngModel)]="clienteForm.direccion"
+          class="form-textarea"
+          rows="3"
+        ></textarea>
+      </div>
+      
+      <div class="form-actions">
+        <button type="button" class="btn-cancelar" (click)="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn-guardar" [disabled]="!formRef.valid">
+          {{ clienteEditando ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

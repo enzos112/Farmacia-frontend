@@ -79,7 +79,7 @@
             <h3>MES ACTUAL</h3>
             <p class="mes-nombre">{{ mesActual }}</p>
           </div>
-          <select class="mes-selector" [(ngModel)]="mesSeleccionado" (change)="onMesChange($event)">
+          <select class="mes-selector" [(ngModel)]="mesSeleccionado" (change)="onMesChange($event)" aria-label="Seleccionar mes">
             <option *ngFor="let mes of mesesDelAnio" [value]="mes">{{ mes }}</option>
           </select>
         </div>
