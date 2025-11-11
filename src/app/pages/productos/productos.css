@@ -816,7 +816,6 @@ input[type="date"].form-control {
 }
 
 .stock-bajo-header {
-  background-color: #fff9e6;
   border-left: 4px solid #FFC107;
   color: #d39e00;
 }
@@ -1119,3 +1118,4 @@ input[type="date"].form-control {
     font-size: clamp(0.85rem, 2.2vw, 0.9rem);
   }
 }
+
