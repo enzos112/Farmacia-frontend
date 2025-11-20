@@ -11,7 +11,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 // ¡¡AÑADE ESTA LÍNEA!!
-import { MatMenuModule } from '@angular/material/menu'; 
+import { MatMenuModule } from '@angular/material/menu';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-layout',
@@ -27,7 +29,8 @@ import { MatMenuModule } from '@angular/material/menu';
     MatButtonModule,
     MatTooltipModule,
     // ¡¡AÑADE ESTA LÍNEA!!
-    MatMenuModule 
+    MatMenuModule,
+    MatDialogModule
   ],
   templateUrl: './layout.html',
   styleUrls: ['./layout.css']
@@ -35,15 +38,27 @@ import { MatMenuModule } from '@angular/material/menu';
 export class LayoutComponent {
 
   private authService = inject(AuthService);
-  
+  private dialog = inject(MatDialog);
+
   // Agrega esta línea para la ruta de tu logo
   logoSmallImageUrl: string = 'images/logo_botica_marcafar.jpg'; // Versión más pequeña o el mismo, pero lo manejaremos con CSS
 
   // Estado del sidebar
-  sidenavOpened: boolean = true;
+  sidenavOpened: boolean = false;
 
   logout() {
-    this.authService.logout();
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Cerrar Sesión',
+        message: '¿Está seguro de que desea cerrar sesión en su cuenta?'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.authService.logout();
+      }
+    });
   }
 
   onSidenavToggle() {

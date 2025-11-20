@@ -1,0 +1,55 @@
+/* Confirm Dialog Styles */
+.mat-mdc-dialog-surface {
+  border-radius: 16px !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid rgba(0, 0, 0, 0.02) !important;
+}
+
+.mat-mdc-dialog-title {
+  color: #303F9F !important;
+  font-weight: 600 !important;
+  font-size: 1.25em !important;
+  margin: 0 !important;
+  padding: 24px 24px 16px 24px !important;
+}
+
+.mat-mdc-dialog-surface.info-dialog {
+  border-left: 4px solid #FF9800 !important;
+}
+
+.info-dialog .mat-mdc-dialog-title {
+  color: #FF9800 !important;
+}
+
+.mat-mdc-dialog-content {
+  padding: 0 24px !important;
+  color: #424242 !important;
+  font-size: 1em !important;
+  line-height: 1.5 !important;
+}
+
+.mat-mdc-dialog-content p {
+  margin: 0 !important;
+}
+
+.mat-mdc-dialog-actions {
+  padding: 24px !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+}
+
+.mat-mdc-dialog-actions button {
+  border-radius: 25px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  min-width: 100px !important;
+}
+
+.mat-mdc-button.mat-warn {
+  background: linear-gradient(45deg, #d32f2f, #b71c1c) !important;
+  color: white !important;
+}
+
+.mat-mdc-button.mat-warn:hover {
+  background: linear-gradient(45deg, #b71c1c, #8b0000) !important;
+}

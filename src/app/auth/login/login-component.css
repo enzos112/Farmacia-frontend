@@ -3,6 +3,7 @@
   height: 100vh; /* Ocupa toda la altura de la ventana */
   width: 100vw;  /* Ocupa todo el ancho de la ventana */
   overflow: hidden; /* Evita scrolls no deseados */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .login-panel {
@@ -16,15 +17,18 @@
 
 /* Panel Izquierdo: Formulario */
 .left-panel {
-  background-color: #ffffff; /* Fondo blanco */
+  background-color: rgba(255, 255, 255, 0.95); /* Fondo blanco semi-transparente */
+  backdrop-filter: blur(10px); /* Efecto de desenfoque */
+  -webkit-backdrop-filter: blur(10px); /* Safari support */
 }
 
 .login-card {
   max-width: 450px; /* Ancho máximo para el formulario */
   width: 100%;
   padding: 30px;
-  box-shadow: none; /* Quitamos la sombra de la tarjeta para un look más minimalista */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); /* Sombra elegante */
   background: transparent; /* Fondo transparente */
+  border-radius: 15px; /* Bordes más redondeados */
 }
 
 .login-header {
@@ -34,34 +38,61 @@
 }
 
 .login-header .main-title {
-  font-size: 2.2rem;
-  font-weight: 600;
-  color: #424242; /* Gris oscuro para el título */
-  margin-bottom: 8px;
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: #303F9F; /* Azul primario */
+  margin-bottom: 12px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  letter-spacing: 1px;
 }
 
 .login-header mat-card-subtitle {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   color: #757575; /* Gris medio para el subtítulo */
+  font-weight: 400;
 }
 
 .full-width {
   width: 100%;
   margin-bottom: 20px;
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .login-button {
   width: 100%;
-  padding: 15px 0;
-  font-size: 1.1rem;
-  background-color: #E91E63; /* Color secundario (rosa) para el botón principal */
+  padding: 16px 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  background: linear-gradient(45deg, #E91E63, #FF4081); /* Gradiente rosa */
   color: white;
-  margin-top: 10px;
-  border-radius: 8px; /* Bordes más suaves */
+  margin-top: 15px;
+  border-radius: 25px; /* Bordes más redondeados */
+  border: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.login-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(233, 30, 99, 0.3);
 }
 
 .login-button:disabled {
-  background-color: #f8bbd0; /* Un rosa más claro para el estado deshabilitado */
+  background: #f8bbd0; /* Un rosa más claro para el estado deshabilitado */
+  transform: none;
+  box-shadow: none;
 }
 
 .error-message {
@@ -74,15 +105,21 @@
 
 .register-link {
   text-align: center;
-  margin-top: 25px;
-  font-size: 0.95rem;
+  margin-top: 30px;
+  font-size: 1rem;
   color: #757575;
+  font-weight: 400;
 }
 
 .register-link a {
   color: #E91E63; /* Color secundario (rosa) para el enlace */
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.register-link a:hover {
+  color: #FF4081;
 }
 
 .register-link a:hover {
@@ -91,11 +128,27 @@
 
 /* Panel Derecho: Logo de la Farmacia */
 .right-panel {
-  background-color: #303F9F; /* Color primario (azul oscuro) del logo */
-  background-size: contain; /* Ajusta la imagen dentro del contenedor */
+  background: linear-gradient(135deg, #303F9F 0%, #1A237E 100%); /* Gradiente azul */
+  background-size: contain;
   background-repeat: no-repeat;
   background-position: center center;
-  /* El logo real de "Bótica MARCAFAR" se define como background-image en el HTML via [style.background-image] */
+  position: relative;
+}
+
+.right-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3); /* Overlay oscuro */
+  z-index: 1;
+}
+
+.right-panel > * {
+  position: relative;
+  z-index: 2;
 }
 
 /* Estilos adicionales para los inputs de Material */
@@ -111,4 +164,8 @@
 }
 .mat-form-field-appearance-outline .mat-form-field-wrapper {
   margin: 0 !important;
+}
+
+.mat-mdc-input-element {
+  padding-left: 16px !important; /* Espacio adicional para el texto */
 }

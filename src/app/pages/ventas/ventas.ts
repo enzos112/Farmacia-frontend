@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -6,13 +6,29 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
+
+// --- 1. IMPORTACIONES PARA GRÁFICOS ---
+import { BaseChartDirective } from 'ng2-charts';
+import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
+
+// Importaciones de modelos y servicios
 import { Venta, DetalleVenta, VentaStats, ProductoVenta, ClienteVenta } from '../../models/venta';
 import { VentaService } from '../../services/venta';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-ventas',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, MatDialogModule, MatButtonModule, MatInputModule, MatFormFieldModule],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    MatIconModule, 
+    MatDialogModule, 
+    MatButtonModule, 
+    MatInputModule, 
+    MatFormFieldModule,
+    BaseChartDirective // ¡Vital para los gráficos!
+  ],
   templateUrl: './ventas.html',
   styleUrls: ['./ventas.css']
 })
@@ -20,7 +36,7 @@ export class VentasComponent implements OnInit {
 
   constructor(private ventaService: VentaService, private dialog: MatDialog) {}
 
-  // Datos principales
+  // --- DATOS PRINCIPALES ---
   ventas: Venta[] = [];
   ventasFiltradas: Venta[] = [];
   ventaStats: VentaStats = {
@@ -32,84 +48,85 @@ export class VentasComponent implements OnInit {
     ingresosTotales: 0
   };
 
-  // Filtros y búsqueda
+  // --- 2. CONFIGURACIÓN DEL GRÁFICO (Soluciona error 'ingresosChart...') ---
+  @ViewChild(BaseChartDirective) chart: BaseChartDirective | undefined;
+  
+  public ingresosChartOptions: ChartConfiguration['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    elements: { line: { tension: 0.4 } }, // Curvas suaves
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.7)' } },
+      y: { display: false }
+    }
+  };
+  public ingresosChartType: ChartType = 'line';
+  public ingresosChartData: ChartData<'line'> = {
+    labels: [],
+    datasets: [
+      {
+        data: [],
+        borderColor: '#ffffff',
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        pointBackgroundColor: '#ffffff',
+        pointBorderColor: '#303F9F',
+        fill: 'origin',
+        borderWidth: 2
+      }
+    ]
+  };
+
+  // --- 3. FILTROS (Soluciona error 'filtroActual', 'setFiltroRapido') ---
   searchTerm: string = '';
+  filtroActual: string = 'todos'; // 'todos', 'completada', 'pendiente', 'cancelada'
   filtroEstado: string = '';
 
-  // Mes actual
+  // --- VARIABLES DE FECHA Y MES ---
   mesActual: string = 'Noviembre';
   mesSeleccionado: string = '';
   mesesDelAnio: string[] = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
   ];
+  mesesDisponibles: string[] = [];
 
-  // Productos más vendidos
-  productosVendidos: any[] = [
-    { nombre: 'Paracetamol 500mg', cantidad: 45, ingresos: 675.00 },
-    { nombre: 'Ibuprofeno 400mg', cantidad: 38, ingresos: 760.00 },
-    { nombre: 'Vitamina C 1g', cantidad: 32, ingresos: 576.00 },
-    { nombre: 'Omeprazol 20mg', cantidad: 28, ingresos: 728.00 },
-    { nombre: 'Amoxicilina 500mg', cantidad: 25, ingresos: 500.00 }
-  ];
-  maxCantidadVendida: number = 45;
+  // --- DATOS CALCULADOS (Widgets) ---
+  productosVendidos: any[] = [];
+  maxCantidadVendida: number = 0;
 
-  // Actividad reciente
-  actividadReciente: any[] = [
-    {
-      texto: 'Nueva venta V-2024-004 por S/. 30.00',
-      fecha: new Date('2024-11-10T16:20:00')
-    },
-    {
-      texto: 'Venta V-2024-003 completada por S/. 40.00',
-      fecha: new Date('2024-11-10T14:45:00')
-    },
-    {
-      texto: 'Nueva venta V-2024-002 por S/. 80.00',
-      fecha: new Date('2024-11-10T11:15:00')
-    },
-    {
-      texto: 'Venta V-2024-001 completada por S/. 50.00',
-      fecha: new Date('2024-11-10T09:30:00')
-    }
-  ];
+  actividadReciente: any[] = [];
 
-  // Modal nueva venta
+  // --- VARIABLES DE MODALES ---
   mostrarModalVenta: boolean = false;
   ventaEditando: Venta | null = null;
-  ventaForm: any = {
-    metodoPago: 'efectivo',
-    observaciones: ''
-  };
-
-  // Cliente y productos para venta
+  ventaForm: any = { metodoPago: 'efectivo', observaciones: '' };
   busquedaCliente: string = '';
   clientesEncontrados: ClienteVenta[] = [];
   clienteSeleccionado: ClienteVenta | null = null;
-
   busquedaProducto: string = '';
   productosEncontrados: ProductoVenta[] = [];
   detallesVenta: DetalleVenta[] = [];
-
-  totalesVenta = {
-    subtotal: 0,
-    igv: 0,
-    total: 0
-  };
-
-  // Modal detalle venta
+  totalesVenta = { subtotal: 0, igv: 0, total: 0 };
   mostrarModalDetalle: boolean = false;
   ventaDetalle: Venta | null = null;
-
-  // Modal cancelar venta
   mostrarModalCancelar: boolean = false;
   ventaCancelar: Venta | null = null;
   motivoCancelacion: string = '';
+  mostrarModalOcultar: boolean = false;
+  ventaOcultar: Venta | null = null;
+  mostrarModalProductos: boolean = false;
+  mostrarModalActividad: boolean = false;
+  mostrarModalVentas: boolean = false;
+  productosCompletos: any[] = [];
+  actividadCompleta: any[] = [];
 
   ngOnInit() {
     this.obtenerMesActual();
     this.mesSeleccionado = this.mesActual;
+    this.filtroEstado = 'todos';
     this.cargarDatos();
+    this.actualizarGraficoIngresos();
   }
 
   obtenerMesActual() {
@@ -118,70 +135,183 @@ export class VentasComponent implements OnInit {
   }
 
   cargarDatos() {
-    // Cargar ventas
     this.ventaService.getVentas().subscribe(ventas => {
       this.ventas = ventas;
-      this.ventasFiltradas = [...ventas];
+      this.aplicarFiltros(); // Aplica filtros iniciales
+      this.calcularTopProductos(); // Calcula productos top
+      this.calcularActividadReciente(); // Calcula actividad reciente
+      this.calcularMesesDisponibles(); // Calcula meses con ventas
     });
-
-    // Cargar estadísticas
     this.ventaService.getVentaStats().subscribe(stats => {
       this.ventaStats = stats;
     });
   }
 
-  buscarVentas() {
-    if (!this.searchTerm.trim()) {
-      this.aplicarFiltros();
-      return;
-    }
+  private calcularMesesDisponibles() {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
 
-    this.ventaService.searchVentas(this.searchTerm).subscribe(ventasFiltradas => {
-      this.ventasFiltradas = this.filtroEstado 
-        ? ventasFiltradas.filter(v => v.estado === this.filtroEstado)
-        : ventasFiltradas;
+    const monthsWithSales = new Set<string>();
+
+    // Incluir el mes actual siempre
+    monthsWithSales.add(this.mesesDelAnio[currentMonth]);
+
+    this.ventas.forEach(venta => {
+      const fecha = new Date(venta.fechaVenta);
+      if (fecha.getFullYear() === currentYear && fecha.getMonth() <= currentMonth) {
+        monthsWithSales.add(this.mesesDelAnio[fecha.getMonth()]);
+      }
     });
+
+    this.mesesDisponibles = Array.from(monthsWithSales).sort((a, b) => this.mesesDelAnio.indexOf(a) - this.mesesDelAnio.indexOf(b));
+  }
+
+  private calcularTopProductos() {
+    const sixDaysAgo = new Date();
+    sixDaysAgo.setDate(sixDaysAgo.getDate() - 6);
+    sixDaysAgo.setHours(0, 0, 0, 0); // Inicio del día
+
+    const ventasSemana = this.ventas.filter(venta =>
+      new Date(venta.fechaVenta) >= sixDaysAgo && venta.estado !== 'oculta'
+    );
+
+    const productCounts: { [key: string]: { cantidad: number, ingresos: number } } = {};
+
+    ventasSemana.forEach(venta => {
+      venta.detalles.forEach(det => {
+        if (!productCounts[det.productoNombre]) {
+          productCounts[det.productoNombre] = { cantidad: 0, ingresos: 0 };
+        }
+        productCounts[det.productoNombre].cantidad += det.cantidad;
+        productCounts[det.productoNombre].ingresos += det.subtotal;
+      });
+    });
+
+    this.productosCompletos = Object.keys(productCounts).map(nombre => ({
+      nombre,
+      cantidad: productCounts[nombre].cantidad,
+      ingresos: productCounts[nombre].ingresos
+    })).sort((a, b) => b.cantidad - a.cantidad);
+
+    this.productosVendidos = this.productosCompletos.slice(0, 10);
+
+    this.maxCantidadVendida = this.productosVendidos.length > 0 ? Math.max(...this.productosVendidos.map(p => p.cantidad)) : 0;
+  }
+
+  private calcularActividadReciente() {
+    // Filtrar ventas no ocultas, ordenar por fecha descendente
+    const ventasOrdenadas = this.ventas
+      .filter(venta => venta.estado !== 'oculta')
+      .sort((a, b) => new Date(b.fechaVenta).getTime() - new Date(a.fechaVenta).getTime());
+
+    this.actividadCompleta = ventasOrdenadas.map(venta => ({
+      texto: `${venta.estado === 'completada' ? 'Venta' : 'Nueva venta'} ${venta.numeroVenta} por S/. ${venta.total.toFixed(2)}`,
+      fecha: new Date(venta.fechaVenta)
+    }));
+
+    this.actividadReciente = this.actividadCompleta.slice(0, 10);
+  }
+
+  // --- 4. LÓGICA DE FILTROS ACTUALIZADA ---
+  setFiltroRapido(filtro: string) {
+    this.filtroActual = filtro;
+    this.aplicarFiltros();
   }
 
   filtrarPorEstado() {
+    this.filtroActual = this.filtroEstado === '' ? 'todos' : this.filtroEstado;
+    this.aplicarFiltros();
+  }
+
+  buscarVentas() {
     this.aplicarFiltros();
   }
 
   private aplicarFiltros() {
-    let ventasFiltradas = [...this.ventas];
+    let resultado = [...this.ventas];
 
-    // Aplicar filtro de búsqueda
+    // 1. Filtro por Estado (Chips)
+    if (this.filtroActual === 'completada') {
+      resultado = resultado.filter(v => v.estado === 'completada');
+    } else if (this.filtroActual === 'pendiente') {
+      resultado = resultado.filter(v => v.estado === 'pendiente');
+    } else if (this.filtroActual === 'oculta') {
+      resultado = resultado.filter(v => v.estado === 'oculta');
+    } else {
+      // Si es 'todos', por defecto ocultamos las archivadas/ocultas
+      resultado = resultado.filter(v => v.estado !== 'oculta');
+    }
+
+    // 2. Filtro por Texto (Buscador)
     if (this.searchTerm.trim()) {
-      ventasFiltradas = ventasFiltradas.filter(venta =>
-        venta.numeroVenta.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        (venta.clienteNombre && venta.clienteNombre.toLowerCase().includes(this.searchTerm.toLowerCase())) ||
-        (venta.clienteDni && venta.clienteDni.includes(this.searchTerm)) ||
-        venta.estado.toLowerCase().includes(this.searchTerm.toLowerCase())
+      const term = this.searchTerm.toLowerCase();
+      resultado = resultado.filter(venta =>
+        venta.numeroVenta.toLowerCase().includes(term) ||
+        (venta.clienteNombre && venta.clienteNombre.toLowerCase().includes(term)) ||
+        (venta.clienteDni && venta.clienteDni.includes(term))
       );
     }
 
-    // Aplicar filtro de estado
-    if (this.filtroEstado) {
-      ventasFiltradas = ventasFiltradas.filter(v => v.estado === this.filtroEstado);
-    }
-
-    this.ventasFiltradas = ventasFiltradas;
+    this.ventasFiltradas = resultado;
   }
 
   onMesChange(event: Event) {
     const select = event.target as HTMLSelectElement;
     this.mesSeleccionado = select.value;
     this.mesActual = select.value;
-    // Aquí se podría recargar las estadísticas del mes seleccionado
+    this.actualizarGraficoIngresos();
   }
 
-  // Métodos para labels
-  getMetodoPagoLabel(metodo: string): string {
-    const labels: { [key: string]: string } = {
-      'efectivo': 'Efectivo',
-      'tarjeta': 'Tarjeta',
-      'transferencia': 'Transferencia'
+  private actualizarGraficoIngresos() {
+    const mesIndex = this.mesesDelAnio.indexOf(this.mesSeleccionado);
+    if (mesIndex === -1) return;
+
+    const year = new Date().getFullYear();
+    const startOfMonth = new Date(year, mesIndex, 1);
+    const endOfMonth = new Date(year, mesIndex + 1, 0);
+
+    const ventasMes = this.ventas.filter(venta => {
+      const fecha = new Date(venta.fechaVenta);
+      return fecha >= startOfMonth && fecha <= endOfMonth && venta.estado !== 'oculta';
+    });
+
+    // Calcular total del mes
+    const totalMes = ventasMes.reduce((sum, v) => sum + v.total, 0);
+    this.ventaStats.ingresosTotales = totalMes;
+
+    // Agrupar por semanas
+    const semanas: number[] = [0, 0, 0, 0, 0]; // Hasta 5 semanas posibles
+    ventasMes.forEach(venta => {
+      const fecha = new Date(venta.fechaVenta);
+      const dia = fecha.getDate();
+      const semana = Math.floor((dia - 1) / 7);
+      semanas[semana] += venta.total;
+    });
+
+    // Tomar las primeras 4 semanas, o menos si no hay
+    const semanasData = semanas.slice(0, 4);
+    const labels = semanasData.map((_, i) => `Sem ${i + 1}`);
+
+    this.ingresosChartData = {
+      labels,
+      datasets: [
+        {
+          data: semanasData,
+          borderColor: '#ffffff',
+          backgroundColor: 'rgba(255,255,255,0.2)',
+          pointBackgroundColor: '#ffffff',
+          pointBorderColor: '#303F9F',
+          fill: 'origin',
+          borderWidth: 2
+        }
+      ]
     };
+  }
+
+  // --- HELPERS ---
+  getMetodoPagoLabel(metodo: string): string {
+    const labels: { [key: string]: string } = { 'efectivo': 'Efectivo', 'tarjeta': 'Tarjeta', 'transferencia': 'Transferencia' };
     return labels[metodo] || metodo;
   }
 
@@ -190,12 +320,38 @@ export class VentasComponent implements OnInit {
       'completada': 'Completada',
       'pendiente': 'Pendiente',
       'cancelada': 'Cancelada',
-      'devuelta': 'Devuelta'
+      'devuelta': 'Devuelta',
+      'oculta': 'Oculta'
     };
     return labels[estado] || estado;
   }
 
-  // Modal nueva venta
+  // --- NUEVA FUNCIÓN: OCULTAR ---
+  ocultarVenta(venta: Venta) {
+    if (!venta.id) return;
+    this.ventaOcultar = venta;
+    this.mostrarModalOcultar = true;
+  }
+
+  confirmarOcultar() {
+    if (!this.ventaOcultar || !this.ventaOcultar.id) return;
+    // Usamos 'as any' por si tu modelo aún no tiene 'oculta' estricto
+    const ventaOculta = { ...this.ventaOcultar, estado: 'oculta' as any };
+
+    this.ventaService.updateVenta(this.ventaOcultar.id, ventaOculta).subscribe(updated => {
+      if (updated) {
+        this.cargarDatos(); // Al recargar, el filtro la ocultará
+        this.cerrarModalOcultar();
+      }
+    });
+  }
+
+  cerrarModalOcultar() {
+    this.mostrarModalOcultar = false;
+    this.ventaOcultar = null;
+  }
+
+  // --- MODALES ---
   abrirModalNuevaVenta() {
     this.ventaEditando = null;
     this.resetearFormularioVenta();
@@ -208,23 +364,17 @@ export class VentasComponent implements OnInit {
       metodoPago: venta.metodoPago,
       observaciones: venta.observaciones || ''
     };
-    
-    // Cargar cliente si existe
     if (venta.clienteId) {
       this.clienteSeleccionado = {
         id: venta.clienteId,
         nombre: venta.clienteNombre?.split(' ')[0] || '',
         apellido: venta.clienteNombre?.split(' ').slice(1).join(' ') || '',
         dni: venta.clienteDni || '',
-        telefono: '',
-        email: ''
+        telefono: '', email: ''
       };
     }
-
-    // Cargar detalles
     this.detallesVenta = [...venta.detalles];
     this.calcularTotales();
-    
     this.mostrarModalVenta = true;
   }
 
@@ -235,10 +385,7 @@ export class VentasComponent implements OnInit {
 
   private resetearFormularioVenta() {
     this.ventaEditando = null;
-    this.ventaForm = {
-      metodoPago: 'efectivo',
-      observaciones: ''
-    };
+    this.ventaForm = { metodoPago: 'efectivo', observaciones: '' };
     this.clienteSeleccionado = null;
     this.busquedaCliente = '';
     this.clientesEncontrados = [];
@@ -248,20 +395,13 @@ export class VentasComponent implements OnInit {
     this.totalesVenta = { subtotal: 0, igv: 0, total: 0 };
   }
 
-  // Búsqueda de clientes
   buscarClientesModal() {
-    if (!this.busquedaCliente.trim()) {
-      this.clientesEncontrados = [];
-      return;
-    }
-
-    this.ventaService.searchClientesVenta(this.busquedaCliente).subscribe(clientes => {
-      this.clientesEncontrados = clientes.slice(0, 5); // Limitar a 5 resultados
-    });
+    if (!this.busquedaCliente.trim()) { this.clientesEncontrados = []; return; }
+    this.ventaService.searchClientesVenta(this.busquedaCliente).subscribe(c => this.clientesEncontrados = c.slice(0, 5));
   }
 
-  seleccionarCliente(cliente: ClienteVenta) {
-    this.clienteSeleccionado = cliente;
+  seleccionarCliente(c: ClienteVenta) {
+    this.clienteSeleccionado = c;
     this.busquedaCliente = '';
     this.clientesEncontrados = [];
   }
@@ -270,125 +410,98 @@ export class VentasComponent implements OnInit {
     this.clienteSeleccionado = null;
   }
 
-  // Búsqueda de productos
   buscarProductosModal() {
-    if (!this.busquedaProducto.trim()) {
-      this.productosEncontrados = [];
-      return;
-    }
-
-    this.ventaService.searchProductos(this.busquedaProducto).subscribe(productos => {
-      this.productosEncontrados = productos.slice(0, 5); // Limitar a 5 resultados
-    });
+    if (!this.busquedaProducto.trim()) { this.productosEncontrados = []; return; }
+    this.ventaService.searchProductos(this.busquedaProducto).subscribe(p => this.productosEncontrados = p.slice(0, 5));
   }
 
-  agregarProducto(producto: ProductoVenta) {
-    // Verificar si el producto ya está en la lista
-    const existeProducto = this.detallesVenta.find(d => d.productoId === producto.id);
-    
-    if (existeProducto) {
-      existeProducto.cantidad++;
-      existeProducto.subtotal = existeProducto.cantidad * existeProducto.precioUnitario;
+  agregarProducto(p: ProductoVenta) {
+    const cantidad = p.cantidadSeleccionada || 1;
+    const ex = this.detallesVenta.find(d => d.productoId === p.id);
+    if (ex) {
+      ex.cantidad += cantidad;
+      ex.subtotal = ex.cantidad * ex.precioUnitario;
     } else {
-      const nuevoDetalle: DetalleVenta = {
-        productoId: producto.id,
-        productoNombre: producto.nombre,
-        cantidad: 1,
-        precioUnitario: producto.precio,
-        subtotal: producto.precio
-      };
-      this.detallesVenta.push(nuevoDetalle);
+      this.detallesVenta.push({
+        productoId: p.id, productoNombre: p.nombre, cantidad: cantidad, precioUnitario: p.precio, subtotal: cantidad * p.precio
+      });
     }
-
     this.busquedaProducto = '';
     this.productosEncontrados = [];
     this.calcularTotales();
   }
 
-  actualizarSubtotal(index: number) {
-    const detalle = this.detallesVenta[index];
-    if (detalle.cantidad <= 0) {
-      detalle.cantidad = 1;
-    }
-    detalle.subtotal = detalle.cantidad * detalle.precioUnitario;
+  actualizarSubtotal(i: number) {
+    const d = this.detallesVenta[i];
+    if (d.cantidad <= 0) d.cantidad = 1;
+    d.subtotal = d.cantidad * d.precioUnitario;
     this.calcularTotales();
   }
 
-  quitarProducto(index: number) {
-    this.detallesVenta.splice(index, 1);
+  quitarProducto(i: number) {
+    this.detallesVenta.splice(i, 1);
     this.calcularTotales();
   }
 
   private calcularTotales() {
-    const totales = this.ventaService.calcularTotales(this.detallesVenta);
-    this.totalesVenta = totales;
+    this.totalesVenta = this.ventaService.calcularTotales(this.detallesVenta);
+  }
+
+  confirmarVenta() {
+    if (this.detallesVenta.length === 0) {
+      this.dialog.open(ConfirmDialogComponent, {
+        data: { message: 'Debe agregar al menos un producto para confirmar la venta.', showConfirm: false },
+        panelClass: 'info-dialog'
+      });
+      return;
+    }
+    this.dialog.open(ConfirmDialogComponent, {
+      data: { message: '¿Quieres confirmar esta venta?' }
+    }).afterClosed().subscribe(result => {
+      if (result) {
+        this.guardarVenta();
+      }
+    });
   }
 
   guardarVenta() {
-    if (this.detallesVenta.length === 0) {
-      alert('Debe agregar al menos un producto');
-      return;
-    }
+    if (this.detallesVenta.length === 0) { alert('Agregue productos'); return; }
 
-    const ventaData: Venta = {
+    const data: Venta = {
       clienteId: this.clienteSeleccionado?.id,
-      clienteNombre: this.clienteSeleccionado 
-        ? `${this.clienteSeleccionado.nombre} ${this.clienteSeleccionado.apellido}`
-        : undefined,
+      clienteNombre: this.clienteSeleccionado ? `${this.clienteSeleccionado.nombre} ${this.clienteSeleccionado.apellido}` : undefined,
       clienteDni: this.clienteSeleccionado?.dni,
-      vendedorId: 1,
-      vendedorNombre: 'Admin Usuario',
-      subtotal: this.totalesVenta.subtotal,
-      igv: this.totalesVenta.igv,
-      total: this.totalesVenta.total,
+      vendedorId: 1, vendedorNombre: 'Admin',
+      subtotal: this.totalesVenta.subtotal, igv: this.totalesVenta.igv, total: this.totalesVenta.total,
       metodoPago: this.ventaForm.metodoPago,
       estado: 'completada',
-      observaciones: this.ventaForm.observaciones || undefined,
+      observaciones: this.ventaForm.observaciones,
       detalles: this.detallesVenta,
-      numeroVenta: '', // Se genera automáticamente
-      fechaVenta: new Date()
+      numeroVenta: '', fechaVenta: new Date()
     };
 
     if (this.ventaEditando) {
-      // Actualizar venta existente
-      this.ventaService.updateVenta(this.ventaEditando.id!, ventaData).subscribe(ventaActualizada => {
-        if (ventaActualizada) {
-          this.cargarDatos();
-          this.cerrarModalVenta();
-          this.agregarActividad(`Venta ${ventaActualizada.numeroVenta} actualizada`);
-        }
+      this.ventaService.updateVenta(this.ventaEditando.id!, data).subscribe(v => {
+        if (v) { this.cargarDatos(); this.cerrarModalVenta(); }
       });
     } else {
-      // Crear nueva venta
-      this.ventaService.createVenta(ventaData).subscribe(nuevaVenta => {
-        this.cargarDatos();
-        this.cerrarModalVenta();
-        this.agregarActividad(`Nueva venta ${nuevaVenta.numeroVenta} por S/. ${nuevaVenta.total.toFixed(2)}`);
+      this.ventaService.createVenta(data).subscribe(v => {
+        this.cargarDatos(); this.cerrarModalVenta();
       });
     }
   }
 
-  // Modal detalle venta
-  verDetalleVenta(venta: Venta) {
-    this.ventaDetalle = venta;
-    this.mostrarModalDetalle = true;
-  }
+  verDetalleVenta(v: Venta) { this.ventaDetalle = v; this.mostrarModalDetalle = true; }
+  cerrarModalDetalle() { this.mostrarModalDetalle = false; this.ventaDetalle = null; }
 
-  cerrarModalDetalle() {
-    this.mostrarModalDetalle = false;
-    this.ventaDetalle = null;
-  }
-
-  // Modal cancelar venta
   cancelarVenta(id: number) {
     const venta = this.ventas.find(v => v.id === id);
     if (!venta) return;
-
     this.ventaCancelar = venta;
     this.motivoCancelacion = '';
     this.mostrarModalCancelar = true;
   }
-
+  
   cerrarModalCancelar() {
     this.mostrarModalCancelar = false;
     this.ventaCancelar = null;
@@ -397,25 +510,11 @@ export class VentasComponent implements OnInit {
 
   confirmarCancelacion() {
     if (!this.ventaCancelar || !this.motivoCancelacion.trim()) return;
-
     this.ventaService.cancelarVenta(this.ventaCancelar.id!, this.motivoCancelacion.trim()).subscribe(cancelada => {
       if (cancelada) {
         this.cargarDatos();
         this.cerrarModalCancelar();
-        this.agregarActividad(`Venta ${this.ventaCancelar!.numeroVenta} cancelada`);
       }
     });
-  }
-
-  private agregarActividad(texto: string) {
-    this.actividadReciente.unshift({
-      texto,
-      fecha: new Date()
-    });
-
-    // Mantener solo las últimas 5 actividades
-    if (this.actividadReciente.length > 5) {
-      this.actividadReciente = this.actividadReciente.slice(0, 5);
-    }
   }
 }

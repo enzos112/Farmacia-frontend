@@ -1,6 +1,6 @@
 <mat-sidenav-container class="app-layout-container" [class.sidebar-collapsed]="!sidenavOpened" [class.sidebar-expanded]="sidenavOpened">
 
-  <mat-sidenav #sidenav mode="side" [opened]="sidenavOpened" (openedChange)="sidenavOpened = $event" class="app-sidenav">
+  <mat-sidenav #sidenav mode="side" [opened]="true" class="app-sidenav">
     
     <div class="sidenav-header-logo">
       <img [src]="logoSmallImageUrl" alt="Logo MarcaFarmacia" class="app-logo-small">
@@ -12,25 +12,24 @@
          *ngFor="let item of menuItems"
          [routerLink]="item.link"
          routerLinkActive="active-link"
-         class="app-nav-item">
+         class="app-nav-item"
+         [matTooltip]="item.text"
+         matTooltipPosition="right">
         <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
         <span matListItemTitle>{{ item.text }}</span>
       </a>
     </mat-nav-list>
 
     <div class="sidenav-footer">
-      <button mat-flat-button color="warn" (click)="logout()" matTooltip="Cerrar Sesión">
-        <mat-icon>exit_to_app</mat-icon> Cerrar Sesión
-      </button>
-    </div>
+       <button mat-flat-button color="warn" (click)="logout()" matTooltip="Cerrar Sesión" matTooltipPosition="right">
+         <mat-icon>exit_to_app</mat-icon> <span>Cerrar Sesión</span>
+       </button>
+     </div>
   </mat-sidenav>
 
   <mat-sidenav-content class="app-main-content" [class.content-expanded]="!sidenavOpened" [class.content-with-sidebar]="sidenavOpened">
 
     <mat-toolbar color="primary" class="app-toolbar">
-      <button mat-icon-button (click)="sidenav.toggle(); onSidenavToggle()" class="menu-button">
-        <mat-icon>menu</mat-icon>
-      </button>
       <span class="app-toolbar-title">Sistema de Gestión de Farmacia</span>
       <span class="app-spacer"></span>
       <div class="user-info">
@@ -55,5 +54,9 @@
     </div>
 
   </mat-sidenav-content>
+
+  <button mat-icon-button (click)="onSidenavToggle()" class="floating-menu-button">
+    <mat-icon>menu</mat-icon>
+  </button>
 
 </mat-sidenav-container>
