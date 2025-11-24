@@ -2,8 +2,9 @@ import { inject, Injectable } from '@angular/core';
 import { environment } from '../../environments/environment.development'; // 1. Importa tu environment
 import { HttpClient } from '@angular/common/http';
 import { Producto } from '../models/producto'; // 2. Importa tu modelo Producto
-import { GenericService } from './generic.service'; // 3. Importa el genérico
-import { Subject } from 'rxjs'; // 4. Importa Subject para la reactividad
+import { GenericService } from './generic-service'; // 3. Importa el genérico
+import { Observable, Subject } from 'rxjs'; // 4. Importa Subject para la reactividad
+import { map } from 'rxjs/operators'; // Para transformar la respuesta
 
 @Injectable({
   providedIn: 'root'
@@ -21,6 +22,25 @@ export class ProductoService extends GenericService<Producto> {
       inject(HttpClient),
       // 8. Pasa la URL de tu API de productos (desde 'environment.ts')
       `${environment.BASE_URL}/productos` 
+    );
+    console.log('🔧 ProductoService inicializado con URL:', `${environment.BASE_URL}/productos`);
+  }
+
+  // Sobrescribir findAll para manejar respuesta paginada
+  override findAll(): Observable<Producto[]> {
+    return this.http.get<any>(this.url).pipe(
+      map(response => {
+        // Si la respuesta tiene la propiedad 'content', es una respuesta paginada
+        if (response && response.content && Array.isArray(response.content)) {
+          return response.content;
+        }
+        // Si ya es un array, devolverlo directamente
+        if (Array.isArray(response)) {
+          return response;
+        }
+        // Si no es ninguno de los anteriores, devolver array vacío
+        return [];
+      })
     );
   }
 

@@ -1,11 +1,12 @@
 <div class="dashboard-container">
   <!-- Header -->
   <div class="dashboard-header">
-    <div>
-      <p class="welcome-text">¡BIENVENIDO!</p>
-      <h1 class="user-name">Administrador</h1>
+    <div class="header-text">
+      <h1 class="page-title">Admin</h1>
     </div>
-    <button class="btn-nuevo-producto" (click)="irAProductos()">Ver Productos</button>
+    <button class="btn-nuevo-producto" (click)="irAProductos()">
+      <mat-icon>visibility</mat-icon> Ver Productos
+    </button>
   </div>
 
   <!-- Main Content -->
@@ -15,56 +16,41 @@
       <!-- Reporte del día -->
       <div class="card reporte-dia">
         <h3>REPORTE DEL DÍA</h3>
-        <div class="metricas-grid">
-          <div class="metrica-item">
-            <div class="metrica-valor">S/. {{ ventasDelDia.toFixed(2) }}</div>
-            <div class="metrica-label">Ventas del día</div>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-icon green"><mat-icon>attach_money</mat-icon></div>
+            <div class="stat-info">
+              <div class="stat-valor">S/. {{ ventasDelDia.toFixed(2) }}</div>
+              <div class="stat-label">Ventas del día</div>
+            </div>
           </div>
-          <div class="metrica-item">
-            <div class="metrica-valor">{{ nuevosProductos }}</div>
-            <div class="metrica-label">Nuevos productos</div>
+          <div class="stat-item">
+            <div class="stat-icon blue"><mat-icon>inventory</mat-icon></div>
+            <div class="stat-info">
+              <div class="stat-valor">{{ totalProductos }}</div>
+              <div class="stat-label">Total productos</div>
+            </div>
           </div>
-          <div class="metrica-item">
-            <div class="metrica-valor">{{ numeroVentasDelDia }}</div>
-            <div class="metrica-label">Número de ventas del día</div>
+          <div class="stat-item">
+            <div class="stat-icon orange"><mat-icon>receipt_long</mat-icon></div>
+            <div class="stat-info">
+              <div class="stat-valor">{{ numeroVentasDelDia }}</div>
+              <div class="stat-label">Número de ventas</div>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Reporte de inventario  -->
       <div class="card reporte-inventario">
-        <h3>REPORTE DE INVENTARIO</h3>
-        <p class="subtitle">Ingreso y stock de productos</p>
+        <h3>REPORTE DE VENTAS</h3>
         <div class="grafico-inventario">
-          <svg viewBox="0 0 400 200" class="chart-svg">
-            <path d="M 0,150 Q 50,100 100,120 T 200,80 T 300,60 T 400,50" fill="none" stroke="#4A90E2" stroke-width="3"/>
-            <path d="M 0,150 Q 50,100 100,120 T 200,80 T 300,60 T 400,50 L 400,200 L 0,200 Z" fill="url(#gradient-inventario)" opacity="0.3"/>
-            <defs>
-              <linearGradient id="gradient-inventario" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:0.8" />
-                <stop offset="100%" style="stop-color:#4A90E2;stop-opacity:0" />
-              </linearGradient>
-            </defs>
-          </svg>
-          <div class="inventario-stats">
-            <div class="stat-label">{{ mesAbrevSeleccionado }}</div>
-            <div class="stat-value">Ingresados este mes: <strong>{{ totalProductosIngresados }} productos</strong></div>
-          </div>
-        </div>
-        <div class="inventario-alerts">
-          <div class="alert-item sin-stock">
-            <span class="alert-icon"></span>
-            <div>
-              <div class="alert-title">Productos sin stock</div>
-              <div class="alert-count">{{ productosSinStock }}</div>
-            </div>
-          </div>
-          <div class="alert-item stock-minimo">
-            <span class="alert-icon"></span>
-            <div>
-              <div class="alert-title">Productos con stock mínimo</div>
-              <div class="alert-count">{{ productosConStockMinimo }}</div>
-            </div>
+          <div class="inventory-chart-wrapper">
+            <canvas baseChart
+              [data]="inventoryChartData"
+              [options]="inventoryChartOptions"
+              [type]="'bar'">
+            </canvas>
           </div>
         </div>
       </div>
@@ -80,16 +66,20 @@
             <p class="mes-nombre">{{ mesActual }}</p>
           </div>
           <select class="mes-selector" [(ngModel)]="mesSeleccionado" (change)="onMesChange($event)" aria-label="Seleccionar mes">
-            <option *ngFor="let mes of mesesDelAnio" [value]="mes">{{ mes }}</option>
+            <option *ngFor="let mes of mesesDisponibles" [value]="mes">{{ mes }}</option>
           </select>
         </div>
-        <div class="mes-total">S/. {{ totalMesActual.toLocaleString('es-PE') }}</div>
+        <div class="mes-total" *ngIf="!sinDatosEnMes">S/. {{ totalMesActual.toLocaleString('es-PE') }}</div>
+        <div class="sin-datos" *ngIf="sinDatosEnMes">
+          <mat-icon>info</mat-icon>
+          <p>No hay datos para este mes</p>
+        </div>
       </div>
 
       <!-- Top productos más vendidos -->
       <div class="card top-vendidos">
         <div class="top-header">
-          <h3>PRODUCTOS MÁS VENDIDOS</h3>
+          <h3>TOP PRODUCTOS MÁS VENDIDOS</h3>
           <p class="top-fecha">{{ mesSeleccionado || mesActual }}</p>
         </div>
         <ul class="top-list">

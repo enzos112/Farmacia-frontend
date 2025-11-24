@@ -47,7 +47,8 @@ export interface DetalleVentaDTO {
 
 export interface VentaStats {
   totalVentas: number;
-  ventasHoy: number;
+  ventasHoy: number; // conteo de ventas hoy
+  ventasHoyMonto: number; // monto total vendido hoy
   ventasMes: number;
   promedioVenta: number;
   ventasPendientes: number;

@@ -4,20 +4,21 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment.development';
 
-export interface Categoria {
-  idCategoria?: number;
+export interface UnidadMedida {
+  idUnidadMedida?: number;
   nombre: string;
+  simbolo: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
-export class CategoriaService {
-  private url = `${environment.BASE_URL}/categoria`;
+export class UnidadMedidaService {
+  private url = `${environment.BASE_URL}/unidadmedida`;
 
   constructor(private http: HttpClient) {}
 
-  findAll(): Observable<Categoria[]> {
+  findAll(): Observable<UnidadMedida[]> {
     return this.http.get<any>(this.url).pipe(
       map(response => {
         // Si la respuesta tiene paginación
@@ -30,12 +31,12 @@ export class CategoriaService {
     );
   }
 
-  save(categoria: Categoria): Observable<Categoria> {
-    return this.http.post<Categoria>(this.url, categoria);
+  save(unidadMedida: UnidadMedida): Observable<UnidadMedida> {
+    return this.http.post<UnidadMedida>(this.url, unidadMedida);
   }
 
-  update(id: number, categoria: Categoria): Observable<Categoria> {
-    return this.http.put<Categoria>(`${this.url}/${id}`, categoria);
+  update(id: number, unidadMedida: UnidadMedida): Observable<UnidadMedida> {
+    return this.http.put<UnidadMedida>(`${this.url}/${id}`, unidadMedida);
   }
 
   delete(id: number): Observable<void> {

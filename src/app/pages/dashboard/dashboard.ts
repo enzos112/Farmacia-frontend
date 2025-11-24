@@ -2,22 +2,28 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import { VentaService } from '../../services/venta';
+import { Venta, DetalleVenta, VentaStats } from '../../models/venta';
+import { BaseChartDirective } from 'ng2-charts';
+import { ChartConfiguration, ChartData } from 'chart.js';
+import { ProductoService } from '../../services/producto-service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BaseChartDirective, MatIconModule],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
 export class DashboardComponent implements OnInit {
   
-  constructor(private router: Router) {}
+  constructor(private router: Router, private ventaService: VentaService, private productoService: ProductoService) {}
   
   // Datos del reporte del día
   ventasDelDia: number = 0;
   numeroVentasDelDia: number = 0; // cantidad de ventas del día
-  nuevosProductos: number = 0;
+  totalProductos: number = 16; // Total de productos en el sistema
 
   // Mes actual
   mesActual: string = 'Enero';
@@ -26,8 +32,11 @@ export class DashboardComponent implements OnInit {
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
   ];
+  // Meses disponibles desde el inicio del sistema (noviembre 2025 en adelante)
+  mesesDisponibles: string[] = [];
   mesSeleccionado: string = '';
   mesAbrevSeleccionado: string = '';
+  sinDatosEnMes: boolean = false;
 
   // Ventas diarias por mes (mock hasta tener backend)
   private ventasDiariasPorMes: Record<string, number[]> = {};
@@ -42,29 +51,260 @@ export class DashboardComponent implements OnInit {
   topProductos: { nombre: string; ventas: number }[] = [];
   maxVentasTop: number = 0;
 
+  // Stats provenientes del servicio
+  ventaStats: VentaStats | null = null;
+
+  // Gráfico inventario (barras + línea)
+  // Usamos 'any' para permitir dataset mixto (bar + line) sin conflicto de tipos en plantilla
+  inventoryChartData: any = {
+    labels: [],
+    datasets: [
+      {
+        type: 'bar',
+        label: 'Unidades',
+        data: [],
+        backgroundColor: 'rgba(22,41,104,0.5)', // Color azul con menor intensidad
+        borderRadius: 4,
+        yAxisID: 'y',
+      },
+      {
+        type: 'line',
+        label: '% Porcentaje',
+        data: [],
+        borderColor: '#ff9800',
+        backgroundColor: 'rgba(255,152,0,0.2)',
+        tension: 0.35,
+        pointBackgroundColor: '#ff9800',
+        pointRadius: 4,
+        yAxisID: 'yPercent'
+      }
+    ]
+  };
+
+  inventoryChartOptions: any = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { 
+        display: true,
+        position: 'top',
+        labels: {
+          usePointStyle: true,
+          padding: 15,
+          font: { size: 12 }
+        }
+      },
+      tooltip: { 
+        enabled: true,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        padding: 12,
+        titleFont: { size: 13 },
+        bodyFont: { size: 12 }
+      },
+    },
+    scales: {
+      y: {
+        position: 'right',
+        title: {
+          display: true,
+          text: 'Unidades',
+          color: '#6c757d',
+          font: { size: 11 }
+        },
+        ticks: { 
+          color: '#6c757d',
+          font: { size: 11 }
+        },
+        grid: {
+          color: '#f0f0f0'
+        },
+        beginAtZero: true
+      },
+      yPercent: {
+        position: 'left',
+        title: {
+          display: true,
+          text: '% Porcentaje',
+          color: '#ff9800',
+          font: { size: 11 }
+        },
+        ticks: {
+          callback: (val: number | string) => val + '%',
+          color: '#ff9800',
+          font: { size: 11 }
+        },
+        grid: {
+          display: false
+        },
+        beginAtZero: true,
+        max: 50
+      },
+      x: {
+        ticks: { 
+          color: '#6c757d',
+          font: { size: 11 },
+          maxRotation: 45,
+          minRotation: 0
+        },
+        grid: { display: false }
+      }
+    }
+  };
+
   ngOnInit() {
     this.obtenerMesActual();
+    this.inicializarMesesDisponibles();
     this.mesSeleccionado = this.mesActual;
-    // Inicializar datos del mes actual (reporte del día y total del mes)
-    this.cargarDatosMes();
-    // Inicializar top productos
-    this.actualizarTopProductos();
+    // Intentar cargar datos reales desde el servicio
+    this.cargarDatosDesdeServicio();
+    
+    // Cargar datos reales de productos
+    this.cargarDatosProductos();
+  }
+
+  private cargarDatosDesdeServicio() {
+    // Obtener estadísticas generales
+    this.ventaService.getVentaStats().subscribe({
+      next: (stats) => {
+        this.ventaStats = stats;
+        // Mapear a las propiedades de UI
+        this.ventasDelDia = stats.ventasHoyMonto; // monto en soles del día
+        this.totalMesActual = stats.ingresosTotales;
+        this.numeroVentasDelDia = stats.ventasHoy; // conteo de ventas del día
+      },
+      error: () => {
+        // Fallback a simulación si el servicio falla
+        this.cargarDatosMes();
+      }
+    });
+
+    // Obtener ventas para calcular top productos
+    this.ventaService.getVentas().subscribe({
+      next: (ventas) => {
+        // Filtrar ventas visibles (no 'oculta') y del mes seleccionado
+        const mesIndex = this.mesesDelAnio.indexOf(this.mesSeleccionado || this.mesActual);
+        const year = new Date().getFullYear();
+        const ventasFiltradas = ventas.filter(v => {
+          const d = new Date(v.fechaVenta);
+          return v.estado !== 'oculta' && d.getFullYear() === year && d.getMonth() === mesIndex;
+        });
+
+        const productCounts: { [key: string]: number } = {};
+        ventasFiltradas.forEach(v => {
+          v.detalles.forEach(d => {
+            productCounts[d.productoNombre] = (productCounts[d.productoNombre] || 0) + d.cantidad;
+          });
+        });
+
+        const productos = Object.keys(productCounts).map(nombre => ({ nombre, ventas: productCounts[nombre] }));
+        productos.sort((a, b) => b.ventas - a.ventas);
+        this.topProductos = productos.slice(0, 5);
+        this.maxVentasTop = this.topProductos.length ? Math.max(...this.topProductos.map(p => p.ventas)) : 0;
+
+        // Actualizar gráfico inventario con estos datos
+        this.actualizarInventoryChart();
+      },
+      error: () => {
+        // fallback: mantener datos simulados
+        this.actualizarTopProductos();
+        this.actualizarInventoryChart();
+      }
+    });
+  }
+
+  private cargarDatosProductos() {
+    this.productoService.findAll().subscribe({
+      next: (productos) => {
+        console.log('📊 Productos cargados para dashboard:', productos);
+        
+        // Total de productos en el sistema
+        this.totalProductos = productos.length;
+        
+        // Productos sin stock (stock = 0)
+        this.productosSinStock = productos.filter(p => p.stock === 0).length;
+        
+        // Productos con stock mínimo o bajo (0 < stock <= stockminimo)
+        this.productosConStockMinimo = productos.filter(p => 
+          p.stock > 0 && p.stock <= p.stockminimo
+        ).length;
+        
+        // Total de productos "ingresados" = todos los productos
+        this.totalProductosIngresados = productos.length;
+        
+        console.log('📈 Estadísticas calculadas:', {
+          total: this.totalProductos,
+          sinStock: this.productosSinStock,
+          stockMinimo: this.productosConStockMinimo
+        });
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar productos para dashboard:', error);
+      }
+    });
+  }
+
+  private actualizarInventoryChart() {
+    const labels = this.topProductos.map(p => p.nombre);
+    const cantidades = this.topProductos.map(p => p.ventas);
+    const total = cantidades.reduce((a, b) => a + b, 0) || 1;
+    const porcentajes = cantidades.map(c => +(c / total * 100).toFixed(2));
+
+    this.inventoryChartData = {
+      labels,
+      datasets: [
+        { ...this.inventoryChartData.datasets[0], data: cantidades },
+        { ...this.inventoryChartData.datasets[1], data: porcentajes }
+      ]
+    };
   }
 
   obtenerMesActual() {
-  // Usar la lista centralizada de meses para evitar duplicación
-  const fecha = new Date();
-  this.mesActual = this.mesesDelAnio[fecha.getMonth()];
+    // Usar la lista centralizada de meses para evitar duplicación
+    const fecha = new Date();
+    this.mesActual = this.mesesDelAnio[fecha.getMonth()];
+  }
+
+  inicializarMesesDisponibles() {
+    // Mes de inicio del sistema: Noviembre 2025 (índice 10)
+    const mesInicioSistema = 10; // Noviembre (0=Enero, 10=Noviembre)
+    const fechaActual = new Date();
+    const mesActualIndex = fechaActual.getMonth();
+    
+    // Si estamos en el mismo año del inicio
+    // Mostrar solo desde noviembre hasta el mes actual
+    this.mesesDisponibles = [];
+    for (let i = mesInicioSistema; i <= mesActualIndex; i++) {
+      this.mesesDisponibles.push(this.mesesDelAnio[i]);
+    }
+    
+    // Si no hay meses disponibles, al menos mostrar el actual
+    if (this.mesesDisponibles.length === 0) {
+      this.mesesDisponibles = [this.mesActual];
+    }
   }
 
   onMesChange(event: Event) {
     const select = event.target as HTMLSelectElement;
     this.mesSeleccionado = select.value;
     this.mesActual = select.value;
+    
+    // Verificar si el mes seleccionado tiene datos
+    this.verificarDatosDelMes();
+    
     // Recalcular ventas del día y total del mes según selección
     this.cargarDatosMes();
     // Actualizar top productos según el mes seleccionado
     this.actualizarTopProductos();
+    // Recargar datos de productos por si cambiaron
+    this.cargarDatosProductos();
+  }
+  
+  verificarDatosDelMes() {
+    // Aquí verificamos si hay datos reales para el mes
+    // Por ahora, como usamos datos simulados, siempre hay datos
+    // Cuando conectes con el backend real, verificar si hay ventas
+    this.sinDatosEnMes = false;
   }
   
   
@@ -140,11 +380,13 @@ export class DashboardComponent implements OnInit {
   }
 
   // Simulación de métricas de inventario por mes (hasta tener backend)
+  // NOTA: Este método ya no se usa porque ahora cargamos datos reales
   private actualizarInventarioMes(mesNombre: string): void {
-    const cur = this.simularInventarioParaMes(mesNombre);
-  this.totalProductosIngresados = cur.ingresados;
-  this.productosSinStock = cur.sinStock;
-  this.productosConStockMinimo = cur.stockMinimo;
+    // Comentado: ahora usamos cargarDatosProductos() que trae datos reales
+    // const cur = this.simularInventarioParaMes(mesNombre);
+    // this.totalProductosIngresados = cur.ingresados;
+    // this.productosSinStock = cur.sinStock;
+    // this.productosConStockMinimo = cur.stockMinimo;
   }
 
   private abreviarMes(mesNombre: string): string {
