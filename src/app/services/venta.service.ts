@@ -47,10 +47,24 @@ export class VentaService {
       map(ventas => {
         const validas = ventas.filter(v => v.estado === 'REGISTRADA');
         const total = validas.reduce((acc, v) => acc + v.total, 0);
+        const hoy = new Date().toISOString().slice(0, 10);
+        const ventasHoy = validas.filter(v => v.fechaVenta?.slice(0, 10) === hoy);
+        const ventasHoyMonto = ventasHoy.reduce((acc, v) => acc + v.total, 0);
+        // Ventas del mes actual
+        const mesActual = hoy.slice(0, 7);
+        const ventasMes = validas.filter(v => v.fechaVenta?.slice(0, 7) === mesActual).length;
+        // Promedio de venta
+        const promedioVenta = validas.length > 0 ? total / validas.length : 0;
+        // Ventas pendientes
+        const ventasPendientes = ventas.filter(v => v.estado === 'pendiente').length;
         return {
           totalVentas: validas.length,
-          ingresosTotales: total,
-          ventasHoy: 0, ventasMes: 0, promedioVenta: 0, ventasPendientes: 0
+          ventasHoy: ventasHoy.length,
+          ventasHoyMonto: ventasHoyMonto,
+          ventasMes: ventasMes,
+          promedioVenta: promedioVenta,
+          ventasPendientes: ventasPendientes,
+          ingresosTotales: total
         };
       })
     );
@@ -58,7 +72,7 @@ export class VentaService {
 
   // --- BÚSQUEDAS (SOLUCIÓN ERROR TS2322) ---
   searchClientesVenta(term: string): Observable<ClienteVenta[]> {
-    return this.http.get<any[]>(`${environment.BASE_URL}/clientes`).pipe(
+    return this.http.get<any[]>(`${environment.BASE_URL}/cliente`).pipe(
       map(clientes => 
         clientes
           .filter(c => (c.nombre + ' ' + c.apellido).toLowerCase().includes(term.toLowerCase()) || c.dni.includes(term))
@@ -106,11 +120,11 @@ export class VentaService {
       )
     );
   }
-
+  
   calcularTotales(detalles: any[]) {
     const subtotal = detalles.reduce((acc, d) => acc + (d.cantidad * d.precioUnitario), 0);
-    const impuesto = subtotal * 0.18;
-    const total = subtotal + impuesto;
-    return { subtotal, impuesto, total };
+    const igv = subtotal * 0.18;
+    const total = subtotal + igv;
+    return { subtotal, igv, total };
   }
 }

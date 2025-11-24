@@ -1,4 +1,12 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary-color: #303F9F;
+  --primary-dark: #1a237e;
+  --card-radius: 16px;
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
 
 * {
   font-family: 'Roboto', sans-serif;
@@ -36,4 +44,10 @@
   --mdc-snackbar-container-color: #f57c00 !important; /* Naranja */
   --mdc-snackbar-supporting-text-color: white !important;
   --mat-snack-bar-button-color: white !important;
+:root {
+  --primary-color: #303F9F;
+  --primary-dark: #1a237e;
+  --card-radius: 16px;
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
 }

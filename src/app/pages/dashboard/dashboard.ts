@@ -3,11 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { VentaService } from '../../services/venta';
+import { VentaService } from '../../services/venta.service';
 import { Venta, DetalleVenta, VentaStats } from '../../models/venta';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData } from 'chart.js';
-import { ProductoService } from '../../services/producto-service';
+import { ProductoService } from '../../services/producto.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -192,8 +192,11 @@ export class DashboardComponent implements OnInit {
 
         const productCounts: { [key: string]: number } = {};
         ventasFiltradas.forEach(v => {
-          v.detalles.forEach(d => {
-            productCounts[d.productoNombre] = (productCounts[d.productoNombre] || 0) + d.cantidad;
+          const detalles = Array.isArray(v.detalles) ? v.detalles : [];
+          detalles.forEach(d => {
+            const nombre = d.productoNombre ?? '';
+            if (!nombre) return;
+            productCounts[nombre] = (productCounts[nombre] || 0) + d.cantidad;
           });
         });
 

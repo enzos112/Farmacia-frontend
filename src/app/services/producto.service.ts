@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { environment } from '../../environments/environment.development'; // 1. Importa tu environment
 import { HttpClient } from '@angular/common/http';
 import { Producto } from '../models/producto'; // 2. Importa tu modelo Producto
-import { GenericService } from './generic-service'; // 3. Importa el genérico
+import { GenericService } from './generic.service'; // 3. Importa el genérico
 import { Observable, Subject } from 'rxjs'; // 4. Importa Subject para la reactividad
 import { map } from 'rxjs/operators'; // Para transformar la respuesta
 

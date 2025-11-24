@@ -4,24 +4,27 @@ import { Usuario } from './usuario'; // Asegúrate de importar Usuario si tienes
 
 export interface Venta {
   idVenta?: number;
+  id?: number; // Compatibilidad con componentes
   numComprobante: string;
+  numeroVenta?: string; // Compatibilidad con componentes
   fechaVenta: string;
-  condicionPago: string;
+  condicionPago?: string;
   total: number;
-  impuesto: number;
-  estado: 'REGISTRADA' | 'ANULADA' | string;
-  
-  cliente?: Cliente;      
-  
-  // --- CORRECCIÓN 1: Agregamos el usuario (vendedor) ---
-  usuario?: Usuario;  // O usa 'any' si no quieres importar el modelo Usuario
-
-  detalleVenta: DetalleVenta[]; 
-
-  // Campos opcionales de compatibilidad
+  impuesto?: number;
+  igv?: number; // Para totales
+  estado: 'REGISTRADA' | 'ANULADA' | 'completada' | 'pendiente' | 'oculta' | string;
+  cliente?: Cliente;
+  usuario?: Usuario;
+  detalleVenta?: DetalleVenta[];
+  detalles?: DetalleVenta[]; // Compatibilidad con componentes
   clienteNombre?: string;
   clienteDni?: string;
   vendedorNombre?: string;
+  metodoPago?: string;
+  observaciones?: string;
+  clienteId?: number;
+  vendedorId?: number;
+  subtotal?: number;
 }
 
 // ... (El resto del archivo DetalleVenta, VentaDTO, etc. déjalo igual)

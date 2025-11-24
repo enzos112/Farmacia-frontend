@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { Producto } from '../../models/producto';
-import { ProductoService } from '../../services/producto-service';
+import { ProductoService } from '../../services/producto.service';
 import { CategoriaService, Categoria } from '../../services/categoria.service';
 import { UnidadMedidaService, UnidadMedida } from '../../services/unidad-medida.service';
 

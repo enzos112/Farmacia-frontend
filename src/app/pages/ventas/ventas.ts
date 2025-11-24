@@ -13,7 +13,7 @@ import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 
 // Importaciones de modelos y servicios
 import { Venta, DetalleVenta, VentaStats, ProductoVenta, ClienteVenta } from '../../models/venta';
-import { VentaService } from '../../services/venta';
+import { VentaService } from '../../services/venta.service';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog';
 
 @Component({
@@ -122,6 +122,26 @@ export class VentasComponent implements OnInit {
   productosCompletos: any[] = [];
   actividadCompleta: any[] = [];
 
+  // --- PROPIEDAD PARA ALERTA DE CARRITO ---
+  mostrarAlertaCarrito = false;
+
+  // --- MÉTODO PARA CERRAR ALERTA ---
+  cerrarAlerta(): void {
+    this.mostrarAlertaCarrito = false;
+  }
+
+  // --- MÉTODO PARA OBTENER PRODUCTOS DE UNA VENTA ---
+  getProductosVenta(venta: Venta): string {
+    const detalles = venta.detalles || venta.detalleVenta || [];
+    return detalles.map((d: DetalleVenta) => d.productoNombre || '').join(', ');
+  }
+
+  // --- MÉTODO PARA OBTENER TOTAL DE CANTIDAD DE UNA VENTA ---
+  getTotalCantidad(venta: Venta): number {
+    const detalles = venta.detalles || venta.detalleVenta || [];
+    return detalles.reduce((sum: number, d: DetalleVenta) => sum + (d.cantidad || 0), 0);
+  }
+
   ngOnInit() {
     this.obtenerMesActual();
     this.mesSeleccionado = this.mesActual;
@@ -180,12 +200,15 @@ export class VentasComponent implements OnInit {
     const productCounts: { [key: string]: { cantidad: number, ingresos: number } } = {};
 
     ventasSemana.forEach(venta => {
-      venta.detalles.forEach(det => {
-        if (!productCounts[det.productoNombre]) {
-          productCounts[det.productoNombre] = { cantidad: 0, ingresos: 0 };
+      const detalles = Array.isArray(venta.detalles) ? venta.detalles : (Array.isArray(venta.detalleVenta) ? venta.detalleVenta : []);
+      detalles.forEach((det: DetalleVenta) => {
+        const nombre = det.productoNombre ?? '';
+        if (!nombre) return;
+        if (!productCounts[nombre]) {
+          productCounts[nombre] = { cantidad: 0, ingresos: 0 };
         }
-        productCounts[det.productoNombre].cantidad += det.cantidad;
-        productCounts[det.productoNombre].ingresos += det.subtotal;
+        productCounts[nombre].cantidad += det.cantidad;
+        productCounts[nombre].ingresos += det.subtotal;
       });
     });
 
@@ -248,7 +271,7 @@ export class VentasComponent implements OnInit {
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase();
       resultado = resultado.filter(venta =>
-        venta.numeroVenta.toLowerCase().includes(term) ||
+        (venta.numeroVenta && typeof venta.numeroVenta === 'string' && venta.numeroVenta.toLowerCase().includes(term)) ||
         (venta.clienteNombre && venta.clienteNombre.toLowerCase().includes(term)) ||
         (venta.clienteDni && venta.clienteDni.includes(term))
       );
@@ -374,7 +397,8 @@ export class VentasComponent implements OnInit {
         telefono: '', email: ''
       };
     }
-    this.detallesVenta = [...venta.detalles];
+      const detalles = venta.detalles ?? venta.detalleVenta ?? [];
+      this.detallesVenta = Array.isArray(detalles) ? [...detalles] : [];
     this.calcularTotales();
     this.mostrarModalVenta = true;
   }
@@ -469,6 +493,7 @@ export class VentasComponent implements OnInit {
     if (this.detallesVenta.length === 0) { alert('Agregue productos'); return; }
 
     const data: Venta = {
+      numComprobante: '',
       clienteId: this.clienteSeleccionado?.id,
       clienteNombre: this.clienteSeleccionado ? `${this.clienteSeleccionado.nombre} ${this.clienteSeleccionado.apellido}` : undefined,
       clienteDni: this.clienteSeleccionado?.dni,
@@ -478,7 +503,7 @@ export class VentasComponent implements OnInit {
       estado: 'completada',
       observaciones: this.ventaForm.observaciones,
       detalles: this.detallesVenta,
-      numeroVenta: '', fechaVenta: new Date()
+      numeroVenta: '', fechaVenta: new Date().toISOString()
     };
 
     if (this.ventaEditando) {
@@ -486,7 +511,12 @@ export class VentasComponent implements OnInit {
         if (v) { this.cargarDatos(); this.cerrarModalVenta(); }
       });
     } else {
-      this.ventaService.createVenta(data).subscribe(v => {
+      // Mapear a VentaDTO para el backend
+      const ventaDTO = {
+        idCliente: this.clienteSeleccionado?.id ?? 0,
+        items: this.detallesVenta.map(d => ({ idProducto: d.productoId ?? 0, cantidad: d.cantidad }))
+      };
+      this.ventaService.createVenta(ventaDTO).subscribe(v => {
         this.cargarDatos(); this.cerrarModalVenta();
       });
     }
@@ -511,7 +541,7 @@ export class VentasComponent implements OnInit {
 
   confirmarCancelacion() {
     if (!this.ventaCancelar || !this.motivoCancelacion.trim()) return;
-    this.ventaService.cancelarVenta(this.ventaCancelar.id!, this.motivoCancelacion.trim()).subscribe(cancelada => {
+    this.ventaService.anularVenta(this.ventaCancelar.id!).subscribe((cancelada: any) => {
       if (cancelada) {
         this.cargarDatos();
         this.cerrarModalCancelar();
