@@ -1,15 +1,25 @@
 export interface Cliente {
-  id?: number;
+  idCliente?: number;
+  id?: number;       // Mantenlo por compatibilidad si usas componentes genéricos
   nombre: string;
   apellido: string;
   dni: string;
-  telefono?: string;
+  
+  
+  // --- AQUÍ ESTABA EL ERROR ---
+  celular?: string;  // <--- AGREGADO (Para coincidir con tu Backend)
+  telefono?: string; // Déjalo opcional por si acaso
+  
   email?: string;
   direccion?: string;
-  fechaRegistro?: Date;
+  
+  fechaRegistro?: string | Date;
   totalCompras?: number;
   ultimaCompra?: Date;
-  estado?: 'activo' | 'inactivo';
+  
+  
+  // Tip: A veces Java manda string, mejor dejarlo flexible
+  estado?: 'activo' | 'inactivo' | string; 
 }
 
 export interface ClienteStats {

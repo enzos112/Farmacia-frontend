@@ -17,6 +17,12 @@
   display: flex;
   flex-direction: column;
   transition: width 0.3s ease-in-out;
+  overflow: hidden;
+  overflow-x: hidden;
+}
+
+.mat-drawer-inner-container {
+  overflow: hidden !important;
 }
 
 .app-layout-container.sidebar-collapsed .app-sidenav {
@@ -30,7 +36,7 @@
 
 .app-layout-container.sidebar-collapsed .app-nav-item mat-icon {
   background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
+  border-radius: 8px;
   padding: 8px;
   font-size: 24px;
   width: 24px;
@@ -66,7 +72,7 @@
 }
 
 .sidenav-footer button {
-  border-radius: 25px;
+  border-radius: 8px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -79,7 +85,7 @@
 .app-layout-container.sidebar-collapsed .sidenav-footer button {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: 8px;
   padding: 0;
   margin: 0 auto;
   position: relative;
@@ -119,12 +125,13 @@
 .app-nav-list {
   padding-top: 10px;
   flex-grow: 1; /* Ocupa el espacio disponible */
+  overflow: hidden;
 }
 
 .app-nav-item {
   color: #ffffff; /* Texto blanco por defecto */
   margin: 5px 10px;
-  border-radius: 8px; /* Bordes redondeados para los items del menú */
+  border-radius: 0 !important;
 }
 
 .app-nav-item mat-icon {
@@ -133,12 +140,12 @@
 
 /* Estilo para el enlace activo */
 .active-link {
-  background-color: rgba(233, 30, 99, 0.2); /* Color secundario (rosa) con opacidad */
-  color: #E91E63; /* Texto rosa */
+  background-color: rgba(255, 255, 255, 0.1) !important; /* Blanco con opacidad */
+  color: #ffffff !important; /* Texto blanco */
 }
 
 .active-link mat-icon {
-  color: #E91E63 !important; /* Ícono rosa */
+  color: #ffffff !important; /* Ícono blanco */
 }
 
 .app-nav-item:hover {
@@ -153,7 +160,7 @@
 
 .sidenav-footer button {
   width: 100%;
-  background-color: #E91E63; /* Botón de cerrar sesión con color secundario */
+  background-color: #d32f2f; /* Botón de cerrar sesión con color rojo para acción crítica */
   color: white;
 }
 
@@ -186,7 +193,7 @@
   z-index: 1000;
   background-color: #303F9F;
   color: white;
-  border-radius: 50%;
+  border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   transition: left 0.3s ease-in-out;
 }
@@ -239,16 +246,18 @@
 /* Responsive behavior for sidebar */
 @media (max-width: 768px) {
   .app-sidenav {
-    width: 100%;
-    max-width: 260px;
+    width: 200px;
   }
 
   .app-main-content {
-    margin-left: 0 !important;
+    margin-left: 200px;
   }
 
   .app-layout-container.sidebar-collapsed .app-sidenav {
-    width: 100%;
-    max-width: 100px;
+    width: 60px;
+  }
+
+  .app-layout-container.sidebar-collapsed .app-main-content {
+    margin-left: 60px;
   }
 }

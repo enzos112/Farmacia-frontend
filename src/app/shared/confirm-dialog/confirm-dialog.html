@@ -4,6 +4,6 @@
 </mat-dialog-content>
 <mat-dialog-actions align="end">
   <button mat-button *ngIf="data.showConfirm !== false" (click)="onCancel()">Cancelar</button>
-  <button mat-raised-button color="warn" *ngIf="data.showConfirm !== false" (click)="onConfirm()">Cerrar sesión</button>
+  <button mat-raised-button color="warn" *ngIf="data.showConfirm !== false" (click)="onConfirm()">Desactivar</button>
   <button mat-raised-button color="primary" *ngIf="data.showConfirm === false" (click)="onCancel()">Aceptar</button>
 </mat-dialog-actions>

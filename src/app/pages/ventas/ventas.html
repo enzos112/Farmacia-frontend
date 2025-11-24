@@ -19,7 +19,7 @@
           <div class="stat-icon blue"><mat-icon>receipt_long</mat-icon></div>
           <div class="stat-info">
             <div class="stat-valor">{{ ventaStats.totalVentas }}</div>
-            <div class="stat-label">Total Ventas</div>
+            <div class="stat-label">Total Histórico</div>
           </div>
         </div>
         <div class="stat-item">
@@ -30,10 +30,10 @@
           </div>
         </div>
         <div class="stat-item">
-          <div class="stat-icon orange"><mat-icon>pending</mat-icon></div>
+          <div class="stat-icon orange"><mat-icon>calendar_view_month</mat-icon></div>
           <div class="stat-info">
-            <div class="stat-valor">{{ ventaStats.ventasPendientes }}</div>
-            <div class="stat-label">Pendientes</div>
+            <div class="stat-valor">{{ ventaStats.ventasMes }}</div>
+            <div class="stat-label">Ventas Mes</div>
           </div>
         </div>
         <div class="stat-item">
@@ -49,23 +49,16 @@
     <div class="card table-section">
       <div class="lista-header">
         <h3>HISTORIAL DE TRANSACCIONES</h3>
-        
         <div class="controles-lista">
           <div class="search-wrapper">
             <mat-icon>search</mat-icon>
-            <input
-              type="text"
-              placeholder="Buscar por número, cliente, DNI..."
-              [(ngModel)]="searchTerm"
-              (input)="buscarVentas()"
-              title="Buscar ventas"
-            >
+            <input type="text" placeholder="Buscar comprobante, cliente, DNI..." [(ngModel)]="searchTerm" (input)="buscarVentas()">
           </div>
-          
-          <select class="filtro-estado" [(ngModel)]="filtroEstado" (ngModelChange)="filtrarPorEstado()" title="Filtrar por estado">
-            <option value="todos">Todas (Visibles)</option> <option value="completada">Completadas</option>
-            <option value="pendiente">Pendientes</option>
-            <option value="oculta">Ocultas / Archivadas</option> </select>
+          <div class="quick-filters">
+            <button class="filter-chip" [class.active]="filtroEstado === ''" (click)="filtroEstado = ''; filtrarPorEstado()">Todas</button>
+            <button class="filter-chip" [class.active]="filtroEstado === 'REGISTRADA'" (click)="filtroEstado = 'REGISTRADA'; filtrarPorEstado()">Registradas</button>
+            <button class="filter-chip" [class.active]="filtroEstado === 'ANULADA'" (click)="filtroEstado = 'ANULADA'; filtrarPorEstado()">Anuladas</button>
+          </div>
         </div>
       </div>
       
@@ -73,84 +66,73 @@
         <table class="ventas-table">
           <thead>
             <tr>
-              <th>Número</th>
+              <th>Comprobante</th>
               <th>Cliente</th>
               <th>Fecha</th>
               <th>Total</th>
-              <th>Método</th>
+              <th>Producto</th>
+              <th>Cantidad</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let venta of ventasFiltradas.slice(0, 5)">
+            <tr *ngFor="let venta of ventasFiltradas">
               <td>
-                <span class="badge-numero">{{ venta.numeroVenta }}</span>
-                <div class="vendedor-subtext">{{ venta.vendedorNombre }}</div>
+                <span class="badge-numero">{{ venta.numComprobante }}</span>
+                <div class="vendedor-subtext">{{ venta.usuario?.nombre || 'Sistema' }}</div>
               </td>
               <td>
-                <div class="fw-bold">{{ venta.clienteNombre || 'Cliente Ocasional' }}</div>
-                <div class="text-muted small">{{ venta.clienteDni || '-' }}</div>
+                <div class="fw-bold">{{ venta.cliente?.nombre || 'Cliente Ocasional' }} {{ venta.cliente?.apellido }}</div>
+                <div class="text-muted small">{{ venta.cliente?.dni || '-' }}</div>
               </td>
               <td>
                 <div>{{ venta.fechaVenta | date:'dd/MM/yyyy' }}</div>
                 <div class="text-muted small">{{ venta.fechaVenta | date:'HH:mm' }}</div>
               </td>
               <td class="fw-bold text-success">S/. {{ venta.total | number:'1.2-2' }}</td>
+              <td>{{ getProductosVenta(venta) }}</td>
+              <td>{{ getTotalCantidad(venta) }}</td>
               <td>
-                <span class="badge-metodo" [class]="venta.metodoPago">
-                  {{ getMetodoPagoLabel(venta.metodoPago) }}
-                </span>
-              </td>
-              <td>
-                <span class="badge-estado" [class]="venta.estado">
+                <span class="badge-estado" [ngClass]="{'estado-completada': venta.estado === 'REGISTRADA', 'estado-cancelada': venta.estado === 'ANULADA'}">
                   {{ getEstadoLabel(venta.estado) }}
                 </span>
               </td>
               <td class="acciones-cell">
-                <button class="btn-icon btn-ver" (click)="verDetalleVenta(venta)" title="Ver">
+                <button class="btn-icon btn-ver" (click)="verDetalleVenta(venta)" title="Ver Detalle">
                   <mat-icon>visibility</mat-icon>
                 </button>
-                <button class="btn-icon btn-editar" (click)="editarVenta(venta)" 
-                        [disabled]="venta.estado === 'cancelada'" title="Editar">
-                  <mat-icon>edit</mat-icon>
-                </button>
+                
                 <button class="btn-icon btn-ocultar" 
                         (click)="ocultarVenta(venta)" 
-                        title="Ocultar Venta"
-                        [disabled]="venta.estado === 'oculta'">
-                  <mat-icon>visibility_off</mat-icon>
+                        title="Anular Venta"
+                        [disabled]="venta.estado === 'ANULADA'">
+                  <mat-icon>block</mat-icon>
                 </button>
               </td>
             </tr>
           </tbody>
         </table>
         
-        <div *ngIf="ventasFiltradas.length === 0" class="empty-state">
-          <mat-icon>receipt_long</mat-icon>
-          <p *ngIf="filtroActual === 'oculta'">No hay ventas ocultas.</p>
-          <p *ngIf="filtroActual !== 'oculta'">No se encontraron ventas registradas.</p>
+        <div *ngIf="ventasFiltradas.length === 0" class="empty-state-widget">
+          <mat-icon>inventory_2</mat-icon>
+          <p>Sin datos suficientes</p>
         </div>
-
-        <button *ngIf="ventasFiltradas.length > 0" class="btn-ver-mas" (click)="mostrarModalVentas = true">Ver más ventas</button>
       </div>
     </div>
 
     <div class="analytics-section-full">
-      
       <div class="card chart-card">
         <div class="card-header-row">
           <h3>TENDENCIA DE INGRESOS</h3>
-          <select class="simple-select" [(ngModel)]="mesSeleccionado" (change)="onMesChange($event)" title="Seleccionar mes">
+          <select class="simple-select" [(ngModel)]="mesSeleccionado" (change)="onMesChange($event)">
             <option *ngFor="let mes of mesesDisponibles" [value]="mes">{{ mes }}</option>
           </select>
         </div>
-        
         <div class="big-number-container">
-           <span class="label">Total Mes:</span>
+           <span class="label">Ingresos Mes:</span>
            <span class="value">S/. {{ ventaStats.ingresosTotales | number:'1.2-2' }}</span>
         </div>
-
         <div class="chart-container-responsive">
           <canvas baseChart
             [data]="ingresosChartData"
@@ -161,9 +143,8 @@
       </div>
 
       <div class="side-widgets">
-        
         <div class="card widget-card">
-          <h3>PRODUCTOS TOP</h3>
+          <h3>PRODUCTOS TOP (MES)</h3>
           <ul class="list-unstyled" *ngIf="productosVendidos.length > 0; else noProductos">
             <li *ngFor="let prod of productosVendidos; let i = index" class="list-item">
               <div class="rank">{{ i + 1 }}</div>
@@ -171,21 +152,20 @@
                 <div class="title">{{ prod.nombre }}</div>
                 <div class="bar-bg"><div class="bar-fill" [style.width.%]="(prod.cantidad/maxCantidadVendida)*100"></div></div>
               </div>
-              <div class="value">{{ prod.cantidad }}</div>
+              <div class="value">{{ prod.cantidad }} un.</div>
             </li>
           </ul>
-          <button *ngIf="productosVendidos.length > 0" class="btn-ver-mas" (click)="mostrarModalProductos = true">Ver más</button>
           <ng-template #noProductos>
             <div class="empty-state-widget">
               <mat-icon>inventory_2</mat-icon>
-              <p>Aún no se han realizado ventas esta semana</p>
+              <p>Sin datos suficientes</p>
             </div>
           </ng-template>
         </div>
 
         <div class="card widget-card">
           <h3>ACTIVIDAD RECIENTE</h3>
-          <ul class="list-unstyled activity-list" *ngIf="actividadReciente.length > 0; else noActividad">
+          <ul class="list-unstyled activity-list" *ngIf="actividadReciente.length > 0; else noActividades">
             <li *ngFor="let act of actividadReciente" class="activity-item">
               <div class="dot"></div>
               <div class="content">
@@ -194,285 +174,223 @@
               </div>
             </li>
           </ul>
-          <button *ngIf="actividadReciente.length > 0" class="btn-ver-mas" (click)="mostrarModalActividad = true">Ver más</button>
-          <ng-template #noActividad>
+          <ng-template #noActividades>
             <div class="empty-state-widget">
-              <mat-icon>history</mat-icon>
-              <p>No hay actividad reciente</p>
+              <mat-icon>inventory_2</mat-icon>
+              <p>Sin datos suficientes</p>
             </div>
           </ng-template>
         </div>
-
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Modal para Ver Detalle de Venta -->
-  <div class="modal-overlay" *ngIf="mostrarModalDetalle" (click)="cerrarModalDetalle()">
-    <div class="modal-content modal-detalle" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Detalle de Venta - {{ ventaDetalle?.numeroVenta }}</h2>
-        <button class="btn-cerrar" (click)="cerrarModalDetalle()"><mat-icon>close</mat-icon></button>
-      </div>
-      <div class="modal-body" *ngIf="ventaDetalle">
-        <div class="detalle-grid">
-          <div class="detalle-item">
-            <strong>Cliente:</strong> {{ ventaDetalle.clienteNombre }}
-          </div>
-          <div class="detalle-item">
-            <strong>DNI:</strong> {{ ventaDetalle.clienteDni }}
-          </div>
-          <div class="detalle-item">
-            <strong>Fecha:</strong> {{ ventaDetalle.fechaVenta | date:'dd/MM/yyyy HH:mm' }}
-          </div>
-          <div class="detalle-item">
-            <strong>Vendedor:</strong> {{ ventaDetalle.vendedorNombre }}
-          </div>
-          <div class="detalle-item">
-            <strong>Método de Pago:</strong> {{ getMetodoPagoLabel(ventaDetalle.metodoPago) }}
-          </div>
-          <div class="detalle-item">
-            <strong>Estado:</strong> {{ getEstadoLabel(ventaDetalle.estado) }}
-          </div>
-          <div class="detalle-item full-width">
-            <strong>Observaciones:</strong> {{ ventaDetalle.observaciones || 'Sin observaciones' }}
-          </div>
-        </div>
-        <h3>Productos</h3>
-        <table class="productos-detalle-table">
-          <thead>
-            <tr>
-              <th>Producto</th>
-              <th>Cantidad</th>
-              <th>Precio Unit.</th>
-              <th>Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let det of ventaDetalle.detalles">
-              <td>{{ det.productoNombre }}</td>
-              <td>{{ det.cantidad }}</td>
-              <td>S/. {{ det.precioUnitario | number:'1.2-2' }}</td>
-              <td>S/. {{ det.subtotal | number:'1.2-2' }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="totales-detalle">
-          <div><strong>Subtotal:</strong> S/. {{ ventaDetalle.subtotal | number:'1.2-2' }}</div>
-          <div><strong>IGV (18%):</strong> S/. {{ ventaDetalle.igv | number:'1.2-2' }}</div>
-          <div class="total"><strong>Total:</strong> S/. {{ ventaDetalle.total | number:'1.2-2' }}</div>
-        </div>
       </div>
     </div>
   </div>
-
-  <!-- Modal para Confirmar Ocultar Venta -->
-  <div class="modal-overlay" *ngIf="mostrarModalOcultar" (click)="cerrarModalOcultar()">
-    <div class="modal-content modal-confirm" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Confirmar Acción</h2>
-        <button class="btn-cerrar" (click)="cerrarModalOcultar()"><mat-icon>close</mat-icon></button>
-      </div>
-      <div class="modal-body">
-        <p>¿Desea ocultar la venta <strong>{{ ventaOcultar?.numeroVenta }}</strong>? Pasará a la sección de archivadas.</p>
-        <div class="modal-actions">
-          <button class="btn-cancelar" (click)="cerrarModalOcultar()">Cancelar</button>
-          <button class="btn-confirmar" (click)="confirmarOcultar()">Confirmar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal para Ver Todos los Productos Top -->
-  <div class="modal-overlay" *ngIf="mostrarModalProductos" (click)="mostrarModalProductos = false">
-    <div class="modal-content modal-detalle" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Todos los Productos Más Vendidos</h2>
-        <button class="btn-cerrar" (click)="mostrarModalProductos = false"><mat-icon>close</mat-icon></button>
-      </div>
-      <div class="modal-body">
-        <ul class="list-unstyled productos-completos-list">
-          <li *ngFor="let prod of productosCompletos; let i = index" class="producto-item">
-            <div class="rank">{{ i + 1 }}</div>
-            <div class="content">
-              <div class="title">{{ prod.nombre }}</div>
-              <div class="details">Cantidad: {{ prod.cantidad }} | Ingresos: S/. {{ prod.ingresos | number:'1.2-2' }}</div>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal para Ver Toda la Actividad Reciente -->
-  <div class="modal-overlay" *ngIf="mostrarModalActividad" (click)="mostrarModalActividad = false">
-    <div class="modal-content modal-detalle" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Toda la Actividad Reciente</h2>
-        <button class="btn-cerrar" (click)="mostrarModalActividad = false"><mat-icon>close</mat-icon></button>
-      </div>
-      <div class="modal-body">
-        <div *ngFor="let act of actividadCompleta" class="activity-item-full">
-          <div class="dot"></div>
-          <div class="content">
-            <div class="text">{{ act.texto }}</div>
-            <div class="date">{{ act.fecha | date:'dd/MM/yyyy HH:mm' }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal para Ver Todas las Ventas Filtradas -->
-  <div class="modal-overlay" *ngIf="mostrarModalVentas" (click)="mostrarModalVentas = false">
-    <div class="modal-content modal-ventas" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Todas las Ventas</h2>
-        <button class="btn-cerrar" (click)="mostrarModalVentas = false"><mat-icon>close</mat-icon></button>
-      </div>
-      <div class="modal-body">
-        <div class="controles-lista">
-          <div class="search-wrapper">
-            <mat-icon>search</mat-icon>
-            <input type="text" placeholder="Buscar por número, cliente, DNI..." [(ngModel)]="searchTerm" (input)="buscarVentas()" title="Buscar ventas">
-          </div>
-          <select class="filtro-estado" [(ngModel)]="filtroEstado" (ngModelChange)="filtrarPorEstado()" title="Filtrar por estado">
-            <option value="todos">Todas (Visibles)</option> <option value="completada">Completadas</option>
-            <option value="pendiente">Pendientes</option>
-            <option value="oculta">Ocultas / Archivadas</option>
-          </select>
-        </div>
-        <table class="ventas-table">
-          <thead>
-            <tr>
-              <th>Número</th>
-              <th>Cliente</th>
-              <th>Fecha</th>
-              <th>Total</th>
-              <th>Método</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let venta of ventasFiltradas">
-              <td>
-                <span class="badge-numero">{{ venta.numeroVenta }}</span>
-                <div class="vendedor-subtext">{{ venta.vendedorNombre }}</div>
-              </td>
-              <td>
-                <div class="fw-bold">{{ venta.clienteNombre || 'Cliente Ocasional' }}</div>
-                <div class="text-muted small">{{ venta.clienteDni || '-' }}</div>
-              </td>
-              <td>
-                <div>{{ venta.fechaVenta | date:'dd/MM/yyyy' }}</div>
-                <div class="text-muted small">{{ venta.fechaVenta | date:'HH:mm' }}</div>
-              </td>
-              <td class="fw-bold text-success">S/. {{ venta.total | number:'1.2-2' }}</td>
-              <td>
-                <span class="badge-metodo" [class]="venta.metodoPago">
-                  {{ getMetodoPagoLabel(venta.metodoPago) }}
-                </span>
-              </td>
-              <td>
-                <span class="badge-estado" [class]="venta.estado">
-                  {{ getEstadoLabel(venta.estado) }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div *ngIf="ventasFiltradas.length === 0" class="empty-state">
-          <mat-icon>receipt_long</mat-icon>
-          <p *ngIf="filtroActual === 'oculta'">No hay ventas ocultas.</p>
-          <p *ngIf="filtroActual === 'pendiente'">No hay ventas pendientes.</p>
-          <p *ngIf="filtroActual === 'completada'">No hay ventas completadas.</p>
-          <p *ngIf="filtroActual === 'todos'">No hay ventas aún.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <div class="modal-overlay" *ngIf="mostrarModalVenta" (click)="cerrarModalVenta()">
-    <div class="modal-content modal-venta" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-             <h2>{{ ventaEditando ? 'Editar Venta' : 'Nueva Venta' }}</h2>
-             <button class="btn-cerrar" (click)="cerrarModalVenta()"><mat-icon>close</mat-icon></button>
-        </div>
-        <div class="venta-form">
+   <div class="modal-content modal-venta" (click)="$event.stopPropagation()">
+       
+       <div *ngIf="mostrarAlertaCarrito" class="alerta-flotante-centro">
+            <div class="contenido-alerta">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <mat-icon style="color: #ffca28;">warning</mat-icon>
+                    <span>No se puede procesar: El carrito está vacío.</span>
+                </div>
+                <button type="button" (click)="cerrarAlerta()">CERRAR</button>
+            </div>
+       </div>
+
+       <div class="modal-header">
+           <h2>{{ ventaEditando ? 'Editar Venta' : 'Nueva Venta' }}</h2>
+           <button class="btn-cerrar" (click)="cerrarModalVenta()"><mat-icon>close</mat-icon></button>
+       </div>
+       
+       <div class="venta-form">
            <div class="form-section">
-                <h4>Cliente (Opcional)</h4>
-                <div class="cliente-selector">
-                    <input type="text" class="form-input" placeholder="Buscar cliente registrado..." [(ngModel)]="busquedaCliente" (input)="buscarClientesModal()" title="Buscar cliente">
-                    <div class="clientes-dropdown" *ngIf="clientesEncontrados.length > 0">
-                         <div class="cliente-option" *ngFor="let c of clientesEncontrados" (click)="seleccionarCliente(c)">
-                             <strong>{{c.nombre}} {{c.apellido}}</strong><br>
-                             <small>DNI: {{c.dni}} | Tel: {{c.telefono}}</small>
-                         </div>
+                <div class="label-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <label style="font-weight: 600; color: #546e7a;">Cliente</label>
+                    <small style="color: #666; font-style: italic;">(Opcional - Se usará Cliente Ocasional)</small>
+                </div>
+                
+                <div class="cliente-selector" style="position: relative;">
+                    <div class="search-input-wrapper" style="display: flex; align-items: center; gap: 10px;">
+                        <mat-icon style="color: #90a4ae;">person_search</mat-icon>
+                        <input type="text" class="form-input" 
+                               placeholder="Buscar cliente registrado (DNI o Nombre)..." 
+                               [(ngModel)]="busquedaCliente" 
+                               (input)="buscarClientesModal()">
+                    </div>
+                    
+                    <div class="clientes-dropdown" *ngIf="clientesEncontrados.length > 0" 
+                         style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 0 0 8px 8px; z-index: 100; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                         <div class="cliente-option" *ngFor="let c of clientesEncontrados" (click)="seleccionarCliente(c)"
+                              style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;">
+                             <div style="font-weight: 600; color: #2c3e50;">{{c.nombre}} {{c.apellido}}</div>
+                             <div style="font-size: 12px; color: #78909c;">DNI: {{c.dni}}</div>
+                          </div>
                     </div>
                 </div>
-                <div *ngIf="clienteSeleccionado" class="cliente-seleccionado">
-                    <div class="cliente-info">
-                        <strong>{{clienteSeleccionado.nombre}} {{clienteSeleccionado.apellido}}</strong><br>
-                        <small>DNI: {{clienteSeleccionado.dni}}</small>
+
+                <div *ngIf="clienteSeleccionado" class="cliente-seleccionado" 
+                     style="margin-top: 10px; background-color: #e8f5e9; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #c8e6c9;">
+                    <div>
+                        <div style="font-weight: 700; color: #2e7d32;">{{clienteSeleccionado.nombre}} {{clienteSeleccionado.apellido}}</div>
+                        <div style="font-size: 12px; color: #388e3c;">DNI: {{clienteSeleccionado.dni}}</div>
                     </div>
-                    <button (click)="quitarCliente()" class="btn-remove">×</button>
+                    <button (click)="quitarCliente()" class="btn-icon btn-cancelar" style="width: 30px; height: 30px;">
+                        <mat-icon style="font-size: 18px;">close</mat-icon>
+                    </button>
                 </div>
-            </div>
-            <div class="form-section">
-                <h4>Productos</h4>
-                <div class="producto-selector">
-                    <input type="text" class="form-input" placeholder="Buscar producto..." [(ngModel)]="busquedaProducto" (input)="buscarProductosModal()" title="Buscar producto">
-                    <div class="productos-dropdown" *ngIf="productosEncontrados.length > 0">
-                        <div class="producto-option" *ngFor="let p of productosEncontrados">
-                            <div class="producto-info">
-                                <strong>{{p.nombre}}</strong><br>
-                                <small>S/. {{p.precio}} | Stock: {{p.stock}}</small>
+           </div>
+
+           <div class="form-section">
+                <label style="font-weight: 600; color: #546e7a; margin-bottom: 8px; display: block;">Agregar Productos</label>
+                
+                <div class="producto-selector" style="position: relative;">
+                    <div class="search-input-wrapper" style="display: flex; align-items: center; gap: 10px;">
+                        <mat-icon style="color: #90a4ae;">inventory_2</mat-icon>
+                        <input type="text" class="form-input" 
+                               placeholder="Buscar producto por nombre..." 
+                               [(ngModel)]="busquedaProducto" 
+                               (input)="buscarProductosModal()">
+                    </div>
+
+                    <div class="productos-dropdown" *ngIf="productosEncontrados.length > 0"
+                          style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 0 0 8px 8px; z-index: 100; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                        <div class="producto-option" *ngFor="let p of productosEncontrados" (click)="agregarProducto(p)"
+                             style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 600; color: #2c3e50;">{{p.nombre}}</div>
+                                <div style="font-size: 12px; color: #78909c;">Stock: {{p.stock}}</div>
                             </div>
-                            <div class="producto-actions">
-                                <input type="number" min="1" max="{{p.stock}}" [(ngModel)]="p.cantidadSeleccionada" placeholder="Cant" class="cantidad-input" title="Cantidad a agregar">
-                                <button (click)="agregarProducto(p)" class="btn-add">Agregar</button>
-                            </div>
+                            <div style="font-weight: 700; color: #303F9F;">S/. {{p.precio | number:'1.2-2'}}</div>
                         </div>
-                    </div>
-                </div>
-                 <table class="productos-table" *ngIf="detallesVenta.length > 0">
-                    <thead><tr><th>Prod</th><th>Cant</th><th>Subtotal</th><th></th></tr></thead>
-                    <tbody>
-                        <tr *ngFor="let d of detallesVenta; let i=index">
-                            <td>{{d.productoNombre}}</td>
-                            <td><input type="number" [(ngModel)]="d.cantidad" (change)="actualizarSubtotal(i)" class="cantidad-input" title="Cantidad"></td>
-                            <td>{{d.subtotal}}</td>
-                            <td><button (click)="quitarProducto(i)">x</button></td>
-                        </tr>
-                    </tbody>
-                 </table>
-            </div>
-            <div class="form-section">
-                <h4>Detalles de la Venta</h4>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Método de Pago</label>
-                        <select [(ngModel)]="ventaForm.metodoPago" class="form-input" title="Método de pago">
-                            <option value="efectivo">Efectivo</option>
-                            <option value="tarjeta">Tarjeta</option>
-                            <option value="transferencia">Transferencia</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Observaciones</label>
-                        <textarea [(ngModel)]="ventaForm.observaciones" class="form-input" rows="3" placeholder="Observaciones opcionales"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="form-actions">
-                <div class="totales-venta">Total: S/. {{totalesVenta.total.toFixed(2)}}</div>
-                <button class="btn-guardar" (click)="confirmarVenta()">Confirmar</button>
-            </div>
+                     </div>
+                 </div>
+                 
+                 <div class="table-responsive" *ngIf="detallesVenta.length > 0" style="margin-top: 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                     <table class="ventas-table" style="min-width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-center" style="width: 100px;">Cant.</th>
+                                <th class="text-right">Subtotal</th>
+                                <th style="width: 50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let d of detallesVenta; let i=index">
+                                <td>
+                                    <div style="font-weight: 600;">{{d.productoNombre}}</div>
+                                    <div style="font-size: 11px; color: #888;">PU: S/. {{d.precioUnitario | number:'1.2-2'}}</div>
+                                </td>
+                                <td class="text-center">
+                                    <input type="number" [(ngModel)]="d.cantidad" (change)="actualizarSubtotal(i)" 
+                                           class="form-input" min="1" style="width: 60px; text-align: center; padding: 4px;">
+                                </td>
+                                <td class="text-right" style="font-weight: 600; color: #303F9F;">S/. {{d.subtotal | number:'1.2-2'}}</td>
+                                <td class="text-center">
+                                    <button (click)="quitarProducto(i)" class="btn-icon btn-cancelar" title="Quitar">
+                                        <mat-icon>delete</mat-icon>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                     </table>
+                 </div>
+                 <div *ngIf="detallesVenta.length === 0" style="padding: 20px; text-align: center; color: #999; font-style: italic; background: #fafafa; border-radius: 8px; margin-top: 10px;">
+                     Busque y seleccione productos para agregarlos a la venta.
+                 </div>
+           </div>
+           
+           <div class="form-section" style="border-bottom: none; background: #f8f9fa; padding: 20px; border-radius: 12px;">
+               <div class="totales-venta" style="display: flex; flex-direction: column; gap: 8px;">
+                   <div style="display: flex; justify-content: space-between; font-size: 14px; color: #666;">
+                       <span>Subtotal:</span>
+                       <span>S/. {{ totalesVenta.subtotal | number:'1.2-2' }}</span>
+                   </div>
+                   <div style="display: flex; justify-content: space-between; font-size: 14px; color: #666;">
+                       <span>Impuesto (18%):</span>
+                       <span>S/. {{ totalesVenta.impuesto | number:'1.2-2' }}</span>
+                   </div>
+                   <div style="display: flex; justify-content: space-between; font-size: 24px; font-weight: 700; color: #303F9F; margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                       <span>Total a Pagar:</span>
+                       <span>S/. {{ totalesVenta.total | number:'1.2-2' }}</span>
+                   </div>
+               </div>
+               
+               <div class="form-group" style="margin-top: 20px;">
+                   <label style="font-weight: 600; color: #546e7a; margin-bottom: 8px; display: block;">Condición de Pago</label>
+                   <select [(ngModel)]="ventaForm.condicionPago" class="form-input" style="background: white;">
+                       <option value="Contado">Contado</option>
+                       <option value="Crédito">Crédito</option>
+                   </select>
+               </div>
+           </div>
+
+           <div class="form-actions">
+                <button class="btn-cancelar" (click)="cerrarModalVenta()">Cancelar</button>
+                <button class="btn-guardar" (click)="confirmarVenta()">
+                    <mat-icon>save</mat-icon> Procesar Venta
+                </button>
+           </div>
+       </div>
+   </div>
+</div>
+
+<div class="modal-overlay" *ngIf="mostrarModalDetalle" (click)="cerrarModalDetalle()">
+    <div class="modal-content modal-detalle" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h2>Detalle de Venta</h2>
+            <button class="btn-cerrar" (click)="cerrarModalDetalle()"><mat-icon>close</mat-icon></button>
         </div>
+        <div class="modal-body" *ngIf="ventaDetalle">
+             <div class="detalle-grid">
+                <div class="detalle-item"><strong>Comprobante:</strong> {{ ventaDetalle.numComprobante }}</div>
+                <div class="detalle-item"><strong>Fecha:</strong> {{ ventaDetalle.fechaVenta | date:'short' }}</div>
+                <div class="detalle-item"><strong>Cliente:</strong> {{ ventaDetalle.cliente?.nombre || 'Ocasional' }} {{ ventaDetalle.cliente?.apellido }}</div>
+                <div class="detalle-item"><strong>Vendedor:</strong> {{ ventaDetalle.usuario?.nombre || 'Sistema' }}</div>
+                <div class="detalle-item"><strong>Condición:</strong> {{ ventaDetalle.condicionPago }}</div>
+                <div class="detalle-item"><strong>Estado:</strong> {{ getEstadoLabel(ventaDetalle!.estado) }}</div>
+             </div>
+             
+             <h3 style="margin-top: 20px; font-size: 16px; color: #303F9F;">Productos Vendidos</h3>
+             <div class="table-responsive" style="border: 1px solid #eee; border-radius: 8px;">
+                 <table class="ventas-table">
+                     <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-center">Cant.</th>
+                            <th class="text-right">Precio</th>
+                            <th class="text-right">Subtotal</th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                         <tr *ngFor="let det of ventaDetalle.detalleVenta">
+                             <td>{{ det.producto?.nombre }}</td> 
+                             <td class="text-center">{{ det.cantidad }}</td>
+                             <td class="text-right">S/. {{ det.precioUnitario | number:'1.2-2' }}</td>
+                             <td class="text-right">S/. {{ det.subtotal | number:'1.2-2' }}</td>
+                         </tr>
+                     </tbody>
+                 </table>
+             </div>
+             <div class="totales-venta" style="margin-top: 20px; text-align: right;">
+                 <h2 style="color: #303F9F; margin: 0;">Total: S/. {{ ventaDetalle.total | number:'1.2-2' }}</h2>
+             </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" *ngIf="mostrarModalOcultar" (click)="cerrarModalOcultar()">
+    <div class="modal-content modal-confirm" (click)="$event.stopPropagation()" style="max-width: 400px;">
+       <div class="modal-header"><h2>Anular Venta</h2></div>
+       <div class="modal-body" style="padding: 20px;">
+          <p>¿Seguro que desea anular la venta <strong>{{ventaOcultar?.numComprobante}}</strong>?</p>
+          <p class="text-muted small" style="color: #888; font-size: 13px; margin-top: 5px;">Esta acción devolverá el stock de los productos al inventario.</p>
+          <div class="form-actions" style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+             <button class="btn-cancelar" (click)="cerrarModalOcultar()">No, regresar</button>
+             <button class="btn-guardar btn-danger" style="background-color: #d32f2f; color: white;" (click)="confirmarOcultar()">Sí, Anular Venta</button>
+          </div>
+       </div>
     </div>
 </div>

@@ -1,16 +1,57 @@
-/* --- Layout Principal --- */
+/* ============================================================ */
+/* 1. LAYOUT ESTRUCTURAL (GRID/FLEX PRINCIPAL)                  */
+/* ============================================================ */
+
 .clientes-container {
   padding: 30px;
   background-color: #f5f7fa;
   min-height: 100vh;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-sizing: border-box;
 }
 
+/* CONTENEDOR PRINCIPAL: Ahora es vertical (Columna) */
+/* Esto hace que la Tabla quede ARRIBA y los Widgets ABAJO */
 .clientes-content {
+  display: flex; 
+  flex-direction: column; /* Cambiado de row a column */
+  gap: 30px; 
+  width: 100%;
+}
+
+/* SECCIÓN SUPERIOR (Tabla + KPIs) */
+.left-section {
+  width: 100%; /* Ocupa todo el ancho disponible */
   display: flex;
   flex-direction: column;
-  gap: 24px; /* Espacio vertical entre secciones */
+  gap: 30px;
 }
+
+/* SECCIÓN INFERIOR (Widgets) */
+.right-section {
+  width: 100%; /* Ocupa todo el ancho */
+  display: flex;
+  flex-direction: row; /* CLAVE: Los widgets se ponen uno al lado del otro */
+  gap: 20px;
+  align-items: stretch; /* Todos del mismo alto */
+}
+
+/* Hacer que cada tarjeta de widget ocupe el mismo espacio (1/3) */
+.right-section .card {
+  flex: 1;
+  min-width: 0; /* Evita que el gráfico rompa el ancho */
+}
+
+/* --- RESPONSIVE (Para celulares y tablets) --- */
+@media (max-width: 1100px) {
+  /* En pantallas medianas, los widgets bajan uno debajo del otro */
+  .right-section {
+    flex-direction: column;
+  }
+}
+/* ============================================================ */
+/* 2. ESTILOS DE COMPONENTES (RECUPERADOS)                      */
+/* ============================================================ */
 
 /* --- Header --- */
 .clientes-header {
@@ -21,59 +62,90 @@
 }
 .page-title { font-size: 32px; color: #2c3e50; margin: 0; font-weight: 700; }
 .welcome-text { font-size: 14px; color: #6c757d; margin: 0; font-weight: 500; }
+
+/* Botón Nuevo Cliente (Estilo recuperado) */
 .btn-nuevo-cliente {
-  background-color: #303F9F; color: white; border: none;
-  padding: 12px 24px; border-radius: 8px; font-weight: 600;
-  cursor: pointer; display: flex; align-items: center; gap: 8px;
+  background-color: #303F9F; 
+  color: white; 
+  border: none;
+  padding: 12px 24px; 
+  border-radius: 8px; 
+  font-weight: 600;
+  cursor: pointer; 
+  display: flex; 
+  align-items: center; 
+  gap: 8px;
+  box-shadow: 0 4px 6px rgba(48, 63, 159, 0.2);
+  transition: background 0.2s;
 }
-/* Botón Rojo (Para desactivar) */
-.btn-eliminar {
-  background-color: #ffebee;
-  color: #d32f2f;
-}
-.btn-eliminar:hover {
-  background-color: #ffcdd2;
-}
+.btn-nuevo-cliente:hover { background-color: #1a237e; }
 
-/* --- NUEVO: Botón Verde (Para activar) --- */
-.btn-activar {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-}
-.btn-activar:hover {
-  background-color: #c8e6c9;
-}
-
-/* --- Tarjetas Generales --- */
+/* --- Tarjetas (Cards) --- */
 .card {
-  background: white; border-radius: 12px; padding: 24px;
+  background: white; 
+  border-radius: 12px; 
+  padding: 24px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  width: 100%;
+  box-sizing: border-box;
 }
 .card h3 {
-  margin: 0 0 20px 0; font-size: 14px; color: #6c757d;
-  font-weight: 700; text-transform: uppercase; border-bottom: 1px solid #f0f0f0;
+  margin: 0 0 20px 0; 
+  font-size: 14px; 
+  color: #6c757d;
+  font-weight: 700; 
+  text-transform: uppercase; 
+  border-bottom: 1px solid #f0f0f0;
   padding-bottom: 12px;
 }
 
-/* --- 1. Estadísticas (Grid de 4) --- */
+/* --- Estadísticas (KPIs) --- */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
 }
-.stat-item { display: flex; flex-direction: column; gap: 5px; }
+.stat-item {
+  display: flex; align-items: center; gap: 16px; padding: 16px;
+  background: #f8f9fa; border-radius: 12px; border: 1px solid #edf2f7;
+  transition: transform 0.2s;
+}
+.stat-item:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+
+.stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; }
+.stat-icon.blue { background: linear-gradient(135deg, #42a5f5, #1976d2); }
+.stat-icon.green { background: linear-gradient(135deg, #66bb6a, #388e3c); }
+.stat-icon.orange { background: linear-gradient(135deg, #ffa726, #f57c00); }
+.stat-icon.purple { background: linear-gradient(135deg, #ab47bc, #7b1fa2); }
+
+.stat-info { display: flex; flex-direction: column; }
 .stat-valor { font-size: 28px; font-weight: 700; color: #2c3e50; }
 .stat-valor.highlight { color: #303F9F; }
-.stat-label { font-size: 13px; color: #95a5a6; font-weight: 500; }
+.stat-label { font-size: 13px; color: #95a5a6; font-weight: 500; display: flex; align-items: center; gap: 5px; }
 
-/* --- 2. Tabla de Clientes --- */
-.lista-header-complex {
-  display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px;
+/* --- Controles de Tabla (Buscador y Filtros) --- */
+.lista-header {
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;
 }
-.header-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-.quick-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.controles-lista { display: flex; gap: 20px; align-items: center; width: 100%; }
 
-/* Chips */
+/* Buscador */
+.search-wrapper { position: relative; display: flex; align-items: center; flex: 1; }
+.search-wrapper mat-icon { position: absolute; left: 12px; color: #90a4ae; font-size: 20px; }
+.search-wrapper input {
+  padding: 10px 16px 10px 40px; 
+  border: 1px solid #cfd8dc; 
+  border-radius: 8px; 
+  outline: none; 
+  font-size: 14px; 
+  width: 100%; 
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.search-wrapper input:focus { border-color: #303F9F; }
+
+/* Filtros (Chips) */
+.quick-filters { display: flex; gap: 8px; flex-wrap: wrap; }
 .filter-chip {
   background: #f1f3f4; border: none; padding: 6px 16px;
   border-radius: 20px; font-size: 13px; font-weight: 600; color: #6c757d;
@@ -82,99 +154,228 @@
 .filter-chip.active { background: #303F9F; color: white; }
 .filter-chip.vip.active { background: #FFC107; color: #3e2723; }
 
-/* Buscador */
-.search-bar-full { position: relative; width: 100%; }
-.search-input {
-  width: 100%; padding: 12px 16px 12px 44px; border: 1px solid #e1e5e9;
-  border-radius: 8px; background: #f8f9fa; box-sizing: border-box;
-}
-.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #95a5a6; }
-
-/* Tabla */
-.table-container { overflow-x: auto; border: 1px solid #f0f0f0; border-radius: 8px; }
+/* --- Tabla de Datos --- */
+.table-responsive { overflow-x: auto; border: 1px solid #f0f0f0; border-radius: 8px; }
 .clientes-table { width: 100%; border-collapse: collapse; min-width: 800px; }
-.clientes-table th { background: #f8f9fa; padding: 14px 16px; text-align: left; font-size: 12px; color: #6c757d; text-transform: uppercase; }
+.clientes-table th { background: #f8f9fa; padding: 14px 16px; text-align: left; font-size: 12px; color: #6c757d; text-transform: uppercase; font-weight: 700; }
 .clientes-table td { padding: 16px; border-bottom: 1px solid #f1f3f4; vertical-align: middle; }
-.cliente-avatar {
-  width: 36px; height: 36px; border-radius: 50%; background: #303F9F;
-  color: white; display: flex; align-items: center; justify-content: center; font-size: 13px;
-}
-.cliente-info { display: flex; align-items: center; gap: 12px; }
+
+/* Celdas específicas */
+.cliente-wrapper { display: flex; align-items: center; gap: 12px; }
+.cliente-avatar { width: 36px; height: 36px; border-radius: 50%; background: #303F9F; color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
 .cliente-nombre { font-weight: 600; color: #2c3e50; }
-.cliente-email { font-size: 12px; color: #95a5a6; }
-.cliente-dni { font-family: monospace; background: #f8f9fa; padding: 4px 8px; border-radius: 4px; font-weight: 600; }
+.cliente-dni { font-family: monospace; background: #f8f9fa; padding: 4px 8px; border-radius: 4px; font-weight: 600; color: #37474f; }
+.dato-contacto { display: flex; align-items: center; gap: 5px; font-weight: 500; color: #2c3e50; }
+.dato-direccion { font-size: 11px; color: #90a4ae; margin-top: 2px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cliente-email-cell { font-size: 13px; color: #546e7a; }
+
+/* Estado Badges */
 .estado-badge { padding: 5px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
 .estado-activo { background: #e8f5e9; color: #2e7d32; }
 .estado-inactivo { background: #ffebee; color: #c62828; }
-.btn-accion { border: none; background: none; cursor: pointer; color: #6c757d; padding: 5px; }
-.btn-accion:hover { background: #f1f3f4; border-radius: 4px; }
 
-/* --- 3. Nueva Sección Inferior (Analytics Grid) --- */
-.analytics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 24px;
-  align-items: start;
-}
+/* Botones Acciones Tabla */
+.cliente-acciones { display: flex; gap: 8px; }
+.btn-accion { border: none; background: none; cursor: pointer; color: #6c757d; padding: 6px; border-radius: 50%; transition: background 0.2s; }
+.btn-accion:hover { background: #f1f3f4; }
+.btn-editar:hover { color: #1976d2; background: #e3f2fd; }
+.btn-eliminar:hover { color: #d32f2f; background: #ffebee; }
+.btn-activar:hover { color: #2e7d32; background: #e8f5e9; }
 
-/* Gráficos */
-.charts-wrapper {
-  display: flex; flex-direction: row; gap: 20px; justify-content: space-around; flex-wrap: wrap;
-}
-.chart-box { flex: 1; min-width: 200px; display: flex; flex-direction: column; align-items: center; }
-.chart-title { font-size: 12px; font-weight: 700; color: #95a5a6; text-transform: uppercase; margin-bottom: 10px; }
-.chart-container-fixed { position: relative; height: 180px; width: 100%; }
+/* Footer Tabla (Botón Ver Todos) */
+.footer-tabla { padding: 15px; border-top: 1px solid #f0f0f0; text-align: center; background: #fafafa; }
+.btn-ver-todos { background-color: #e3f2fd; color: #1565c0; border: none; padding: 10px 20px; border-radius: 20px; font-weight: 600; cursor: pointer; transition: background 0.2s; width: 100%; }
+.btn-ver-todos:hover { background-color: #bbdefb; }
 
-/* Top Clientes y Actividad */
-.top-list, .actividad-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 15px; }
-.top-row, .actividad-item { display: flex; align-items: center; gap: 12px; }
-.top-index { width: 24px; height: 24px; background: #f5f5f5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #6c757d; }
-.top-info { flex: 1; }
-.top-nombre { font-size: 13px; font-weight: 600; color: #2c3e50; }
+/* ============================================================ */
+/* 3. WIDGETS (Derecha)                                         */
+/* ============================================================ */
+
+.mini-chart-container { margin-bottom: 20px; }
+.chart-title { font-size: 12px; font-weight: 700; color: #95a5a6; text-transform: uppercase; margin-bottom: 10px; text-align: center; }
+.divider { height: 1px; background: #f0f0f0; margin: 20px 0; }
+
+/* Top Clientes Lista */
+.top-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 15px; }
+.top-row { display: flex; align-items: center; gap: 12px; }
+.top-index { width: 24px; height: 24px; background: #f5f5f5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #6c757d; flex-shrink: 0; }
+.top-info { flex: 1; min-width: 0; }
+.top-nombre { font-size: 13px; font-weight: 600; color: #2c3e50; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .progress-bg { width: 100%; height: 6px; background: #f0f0f0; border-radius: 3px; margin-top: 4px; }
 .progress-bar { height: 100%; background: #303F9F; border-radius: 3px; }
 .top-compras { font-weight: 700; color: #2e7d32; font-size: 13px; }
 
-.actividad-icon { width: 32px; height: 32px; background: #e8eaf6; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #303F9F; }
+/* Actividad Lista */
+.actividad-list { display: flex; flex-direction: column; gap: 15px; }
+.actividad-item { display: flex; gap: 12px; align-items: center; }
+.actividad-icon { width: 32px; height: 32px; background: #e8eaf6; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #303F9F; flex-shrink: 0; }
+.actividad-info { display: flex; flex-direction: column; }
 .actividad-texto { font-size: 13px; color: #424242; }
-.actividad-fecha { font-size: 11px; color: #9e9e9e; }
+.actividad-fecha { font-size: 11px; color: #9e9e9e; margin-top: 2px; }
 
-/* --- Modal --- */
-.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background: white; width: 90%; max-width: 500px; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
-.modal-header { padding: 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+.btn-ver-mas { width: 100%; padding: 10px; background-color: #f5f5f5; color: #303F9F; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 15px; transition: background 0.2s; }
+.btn-ver-mas:hover { background-color: #e0e0e0; }
+
+/* Colores Iconos Actividad */
+.icon-green { color: #43a047; }
+.icon-red { color: #e53935; }
+.icon-blue { color: #1e88e5; }
+
+/* ============================================================ */
+/* 4. MODALES Y FORMULARIOS (ESTILOS RECUPERADOS)               */
+/* ============================================================ */
+
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(2px); }
+.modal-content { background: white; width: 90%; max-width: 500px; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); display: flex; flex-direction: column; max-height: 85vh; }
+.modal-header { padding: 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; background: white; border-radius: 12px 12px 0 0; }
 .modal-header h2 { margin: 0; font-size: 18px; color: #303F9F; }
-.btn-cerrar { background: none; border: none; cursor: pointer; }
-.form-scrollable-content { padding: 20px; max-height: 70vh; overflow-y: auto; }
+.btn-cerrar { background: none; border: none; cursor: pointer; font-size: 20px; color: #90a4ae; }
+.btn-cerrar:hover { color: #d32f2f; }
+
+.modal-body { padding: 20px; overflow-y: auto; }
+
+/* Formulario (Inputs y Botones) */
+.venta-form { padding: 20px; overflow-y: auto; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 .form-group { margin-bottom: 16px; }
 .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #546e7a; }
-.form-input, .form-textarea { width: 100%; padding: 10px; border: 1px solid #cfd8dc; border-radius: 6px; box-sizing: border-box; }
-.form-actions { padding: 20px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 12px; }
-.btn-cancelar { background: #f5f5f5; color: #6c757d; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
-.btn-guardar { background: #303F9F; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
-.btn-guardar:disabled { background: #ccc; }
 
-/* Esto separa las tarjetas de "Análisis", "Top Clientes" y "Actividad" */
-.right-section .card {
-  margin-bottom: 30px; /* Agrega 30px de aire debajo de cada tarjeta */
-  display: block;      /* Asegura que el navegador respete el margen */
+/* Inputs Estilizados */
+.form-input, .form-textarea { 
+  width: 100%; 
+  padding: 10px 12px; 
+  border: 1px solid #cfd8dc; 
+  border-radius: 6px; 
+  box-sizing: border-box; 
+  font-size: 14px; 
+  transition: border-color 0.2s;
+}
+.form-input:focus, .form-textarea:focus { border-color: #303F9F; outline: none; box-shadow: 0 0 0 3px rgba(48, 63, 159, 0.1); }
+.form-input:disabled { background-color: #f5f5f5; color: #9e9e9e; cursor: not-allowed; border-color: #e0e0e0; }
+
+/* Botones del Formulario */
+.form-actions { margin-top: 20px; padding-top: 20px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 12px; }
+.btn-cancelar { background: #f5f5f5; color: #6c757d; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+.btn-cancelar:hover { background: #e0e0e0; }
+.btn-guardar { background: #303F9F; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s; }
+.btn-guardar:hover { background: #1a237e; box-shadow: 0 4px 8px rgba(48, 63, 159, 0.2); }
+.btn-guardar:disabled { background: #b0bec5; cursor: not-allowed; box-shadow: none; }
+
+/* Estilos para Modales Específicos */
+.modal-content.modal-ranking, .modal-content.modal-chart-large { max-width: 650px; height: 80vh; }
+/* --- Modal Tabla Completa Ajustado --- */
+.modal-content.modal-full-table {
+    /* Ancho máximo responsivo: 95% de la pantalla pero sin pasarse de 1100px */
+    max-width: 1100px; 
+    width: 95%; 
+    
+    /* Altura fija */
+    height: 90vh;
+    
+    /* Márgenes automáticos para centrado, pero respetando bordes */
+    margin: 20px auto; 
+    
+    /* Flex para estructura interna */
+    display: flex;
+    flex-direction: column;
 }
 
-/* (Opcional) Quita el margen de la última tarjeta para que no empuje el final */
-.right-section .card:last-child {
-  margin-bottom: 0;
+/* Ajuste para pantallas medianas donde choca con menú */
+@media (max-width: 1200px) {
+    .modal-content.modal-full-table {
+        width: 90%; /* Un poco más de margen lateral */
+        max-width: none; /* Permitir estirarse si es necesario */
+    }
 }
 
-/* Asegúrate también de que la sección izquierda tenga separación si es necesaria */
-.left-section .card {
-  margin-bottom: 30px;
+/* Timeline (Historial) */
+.timeline-container { padding-left: 10px; }
+.timeline-group { margin-bottom: 25px; }
+.date-separator { margin-bottom: 15px; margin-left: -15px; }
+.date-separator span { background: #e3f2fd; color: #1565c0; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.timeline-item { position: relative; padding-left: 20px; border-left: 2px solid #e0e0e0; padding-bottom: 20px; }
+.timeline-item:last-child { border-left: 2px solid transparent; }
+.timeline-marker { position: absolute; left: -7px; top: 0; width: 12px; height: 12px; border-radius: 50%; background: #303F9F; border: 2px solid white; box-shadow: 0 0 0 1px #e0e0e0; }
+.timeline-content.compact { background: #f9fafb; padding: 10px 15px; border-radius: 6px; border: 1px solid #eee; }
+.timeline-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.time-badge { font-size: 11px; color: #78909c; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid #eee; font-family: monospace; }
+.text-body { font-size: 14px; color: #37474f; font-weight: 500; }
+
+/* Ranking Modal Styles */
+.ranking-header { display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 2px solid #f0f0f0; margin-bottom: 15px; font-size: 14px; font-weight: 700; color: #546e7a; }
+.top-list.full-list .top-item { padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
+.top-index.trofeo-oro { background: #fff8e1; color: #f57f17; border: 1px solid #ffecb3; }
+.top-index.trofeo-plata { background: #f5f5f5; color: #616161; border: 1px solid #e0e0e0; }
+.top-index.trofeo-bronce { background: #fbe9e7; color: #d84315; border: 1px solid #ffccbc; }
+
+/* Alertas (SnackBar) */
+.alerta-success { --mdc-snackbar-container-color: #2e7d32 !important; --mdc-snackbar-supporting-text-color: white !important; --mat-snack-bar-button-color: white !important; }
+.alerta-error { --mdc-snackbar-container-color: #d32f2f !important; --mdc-snackbar-supporting-text-color: white !important; --mat-snack-bar-button-color: white !important; }
+
+/* Empty States */
+.empty-state-widget { text-align: center; padding: 30px; color: #b0bec5; }
+.empty-state-widget mat-icon { font-size: 48px; width: 48px; height: 48px; margin-bottom: 10px; opacity: 0.5; }
+.empty-state-widget p { margin: 0; font-size: 14px; }
+
+/* 1. EL CONTENEDOR OSCURO (OVERLAY) */
+/* Aplicamos esto SIEMPRE, sin importar si es móvil o PC */
+.modal-overlay {
+  /* Empujamos el inicio del modal 85px a la derecha (ancho de tu menú) */
+  left: 85px !important; 
+  
+  /* El ancho es el total MENOS esos 85px */
+  width: calc(100% - 85px) !important;
+  
+  /* Centramos el contenido en este nuevo espacio disponible */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 2. EL CUADRO BLANCO (CONTENT) */
+/* Ajustes para que no se vea apretado en el espacio reducido del móvil */
+.modal-content {
+  /* Ocupa casi todo el ancho del espacio disponible (azul claro) */
+  width: 96% !important; 
+  max-width: 1100px; /* Tope máximo para PC */
+  
+  /* Márgenes de seguridad */
+  margin: 10px auto;
+}
+
+/* 3. AJUSTE FINO PARA MÓVILES MUY PEQUEÑOS (iPhone, etc) */
+@media (max-width: 480px) {
+  .modal-content {
+    /* En móvil aprovechamos más la altura */
+    max-height: 95vh; 
+  }
+  
+  .modal-body {
+    /* Reducimos el relleno interno para ganar espacio útil */
+    padding: 10px; 
+  }
+  
+  /* Aseguramos que la tabla tenga scroll horizontal propio */
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    display: block;
+  }
 }
 
 /* --- Responsive --- */
+@media (max-width: 1200px) {
+  .clientes-content { flex-direction: column; }
+  .right-section { width: 100%; flex-direction: row; flex-wrap: wrap; }
+  .right-section .card { flex: 1; min-width: 300px; }
+}
+
 @media (max-width: 768px) {
+  .clientes-container { padding: 15px; }
+  .right-section { flex-direction: column; }
   .stats-grid { grid-template-columns: 1fr 1fr; }
-  .analytics-grid { grid-template-columns: 1fr; } /* Una sola columna para widgets */
-  .charts-wrapper { flex-direction: column; }
-  .form-row { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; gap: 10px; }
+  .modal-content { width: 95%; max-width: none; }
+  .modal-content.modal-full-table { border-radius: 0; height: 100%; width: 100%; }
+  .top-list, .actividad-list { gap: 10px; }
 }

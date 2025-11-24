@@ -17,29 +17,44 @@
         <h3>ESTADÍSTICAS DE CLIENTES</h3>
         <div class="stats-grid">
           <div class="stat-item">
-            <div class="stat-valor">{{ clienteStats.totalClientes }}</div>
-            <div class="stat-label">Total Clientes</div>
+            <div class="stat-icon blue"><mat-icon>person</mat-icon></div>
+            <div class="stat-info">
+              <div class="stat-valor">{{ clienteStats.totalClientes }}</div>
+              <div class="stat-label">Total Clientes</div>
+            </div>
+          </div>
+          <div class="stat-item cursor-pointer hover-effect" (click)="abrirModalCrecimiento()" title="Ver historial de crecimiento">
+              <div class="stat-icon green"><mat-icon>person_add</mat-icon></div>
+              <div class="stat-info">
+                  <div class="stat-valor">{{ clienteStats.clientesNuevos }}</div>
+                  <div class="stat-label">Nuevos (30d) <mat-icon style="font-size:12px; width:12px; height:12px">visibility</mat-icon></div>
+              </div>
           </div>
           <div class="stat-item">
-            <div class="stat-valor">{{ clienteStats.clientesNuevos }}</div>
-            <div class="stat-label">Nuevos (30d)</div>
+            <div class="stat-icon orange"><mat-icon>check_circle</mat-icon></div>
+            <div class="stat-info">
+              <div class="stat-valor">{{ clienteStats.clientesActivos }}</div>
+              <div class="stat-label">Activos</div>
+            </div>
           </div>
           <div class="stat-item">
-            <div class="stat-valor">{{ clienteStats.clientesActivos }}</div>
-            <div class="stat-label">Activos</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-valor highlight">S/. {{ clienteStats.ventasTotales | number:'1.2-2' }}</div>
-            <div class="stat-label">Ventas Totales</div>
+              <div class="stat-icon purple"><mat-icon>attach_money</mat-icon></div>
+              <div class="stat-info">
+                  <div class="stat-valor highlight">S/. {{ clienteStats.ventasTotales | number:'1.2-2' }}</div>
+                  <div class="stat-label">Valor de Cartera</div> </div>
           </div>
         </div>
       </div>
 
-      <div class="card lista-clientes">
+      <div class="card table-section">
         
-        <div class="lista-header-complex">
-          <div class="header-top">
-            <h3>LISTA DE CLIENTES</h3>
+        <div class="lista-header">
+          <h3>LISTA DE CLIENTES</h3>
+          <div class="controles-lista">
+            <div class="search-wrapper">
+              <mat-icon>search</mat-icon>
+              <input type="text" placeholder="Buscar por nombre, DNI, email..." [(ngModel)]="searchTerm" (input)="buscarClientes()">
+            </div>
             <div class="quick-filters">
               <button class="filter-chip" [class.active]="filtroActual === 'todos'" (click)="setFiltroRapido('todos')">Todos</button>
               <button class="filter-chip" [class.active]="filtroActual === 'activos'" (click)="setFiltroRapido('activos')">Activos</button>
@@ -47,159 +62,233 @@
               <button class="filter-chip vip" [class.active]="filtroActual === 'vip'" (click)="setFiltroRapido('vip')">VIP</button>
             </div>
           </div>
-
-          <div class="search-bar-full">
-            <mat-icon class="search-icon">search</mat-icon>
-            <input type="text" class="search-input" placeholder="Buscar por nombre, DNI, email..." [(ngModel)]="searchTerm" (input)="buscarClientes()">
-          </div>
         </div>
-        
-        <div class="table-container">
-          <table class="clientes-table">
-            <thead>
-              <tr>
+        <div class="table-responsive">
+    <table class="clientes-table">
+        <thead>
+            <tr>
                 <th>Cliente</th>
                 <th>DNI</th>
                 <th>Contacto</th>
-                <th>Total Compras</th>
+                <th>Email</th>
                 <th>Estado</th>
                 <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let cliente of clientesFiltrados" class="cliente-row">
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let cliente of clientesFiltrados" class="cliente-row">
+                
                 <td class="cliente-info">
-                  <div class="cliente-avatar">{{ cliente.nombre.charAt(0) }}{{ cliente.apellido.charAt(0) }}</div>
-                  <div class="cliente-datos">
-                    <div class="cliente-nombre">{{ cliente.nombre }} {{ cliente.apellido }}</div>
-                    <div class="cliente-email">{{ cliente.email || 'Sin email' }}</div>
+                    <div class="cliente-wrapper" style="display: flex; align-items: center; gap: 12px;">
+                      <div class="cliente-avatar" style="background: #e0e7ff; color: #303F9F; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                          {{ cliente.nombre.charAt(0) || 'C' }}{{ cliente.apellido.charAt(0) || '' }}
+                      </div>
+                      <div class="cliente-datos">
+                          <div class="cliente-nombre" style="font-weight: 600; color: #2c3e50;">
+                              {{ cliente.nombre }} {{ cliente.apellido }}
+                          </div>
+                      </div>
                   </div>
                 </td>
-                <td class="cliente-dni">{{ cliente.dni }}</td>
+
+                <td class="cliente-dni" style="font-family: monospace; font-size: 14px;">
+                    {{ cliente.dni }}
+                </td>
+
                 <td class="cliente-contacto">
-                  <div class="dato-contacto"><mat-icon>phone</mat-icon> {{ cliente.telefono || '-' }}</div>
+                    <div class="dato-contacto" style="display: flex; align-items: center; gap: 5px;">
+                        <mat-icon style="font-size: 16px; width: 16px; height: 16px; color: #78909c;">phone_iphone</mat-icon> 
+                        {{ cliente.celular || cliente.telefono || '-' }}
+                    </div>
+                    <div class="dato-direccion" style="font-size: 11px; color: #90a4ae; margin-top: 2px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ cliente.direccion || 'Sin dirección' }}
+                    </div>
                 </td>
-                <td class="cliente-compras">S/. {{ (cliente.totalCompras || 0) | number:'1.2-2' }}</td>
+
+                <td class="cliente-email-cell">
+                    <span style="color: #546e7a;">{{ cliente.email || 'No registrado' }}</span>
+                </td>
+
                 <td>
-                  <span class="estado-badge" [class]="'estado-' + cliente.estado">
-                    {{ cliente.estado === 'activo' ? 'Activo' : 'Inactivo' }}
-                  </span>
+                    <span class="estado-badge" [ngClass]="'estado-' + (cliente.estado || 'activo').toLowerCase()">
+                        {{ (cliente.estado || 'activo') | titlecase }}
+                    </span>
                 </td>
-                
+
                 <td class="cliente-acciones">
-                  <button class="btn-accion btn-editar" (click)="editarCliente(cliente)" title="Editar">
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  
-                  <button class="btn-accion" 
-                          [class.btn-eliminar]="cliente.estado === 'activo'"
-                          [class.btn-activar]="cliente.estado === 'inactivo'"
-                          (click)="cambiarEstado(cliente)" 
-                          [title]="cliente.estado === 'activo' ? 'Desactivar' : 'Activar'">
-                    <mat-icon>{{ cliente.estado === 'activo' ? 'block' : 'check_circle' }}</mat-icon>
-                  </button>
+                    <button class="btn-accion btn-editar" (click)="editarCliente(cliente)" title="Editar">
+                        <mat-icon>edit</mat-icon>
+                    </button>
+
+                    <button class="btn-accion" 
+                            [class.btn-eliminar]="cliente.estado === 'activo'"
+                            [class.btn-activar]="cliente.estado !== 'activo'"
+                            (click)="cambiarEstado(cliente)" 
+                            [title]="cliente.estado === 'activo' ? 'Desactivar' : 'Activar'">
+                        <mat-icon>{{ cliente.estado === 'activo' ? 'block' : 'check_circle' }}</mat-icon>
+                    </button>
                 </td>
-              </tr>
-            </tbody>
-          </table>
-          
-          <div *ngIf="clientesFiltrados.length === 0" class="no-results">
-            <mat-icon>search_off</mat-icon>
-            <p>No se encontraron clientes.</p>
+            </tr>
+        </tbody>
+    </table>
+    <div class="footer-tabla" *ngIf="clientesFiltrados.length > 0">
+             <button class="btn-ver-todos" (click)="abrirModalTodos()">
+                Ver todos los registros ({{ clientesFiltrados.length }})
+             </button>
           </div>
-        </div>
+    <div *ngIf="clientesFiltrados.length === 0" class="empty-state-widget">
+        <mat-icon>inventory_2</mat-icon>
+        <p>No se encontraron clientes registrados</p>
+    </div>
+</div>
+        
+    <div class="right-section">
+      <div class="card widget-card">
+        <h3>ANÁLISIS DE CARTERA</h3>
+         <div *ngIf="clientes.length > 0; else noData">
+           <div class="mini-chart-container">
+             <p class="chart-title">Distribución por Estado</p>
+             <div class="chart-wrapper-doughnut">
+               <canvas baseChart [data]="estadoChartData" [options]="estadoChartOptions" [type]="estadoChartType"></canvas>
+             </div>
+           </div>
+           <div class="divider"></div>
+           <div class="mini-chart-container">
+             <p class="chart-title">Segmentación (Compras)</p>
+             <div class="chart-wrapper-bar">
+               <canvas baseChart [data]="segmentoChartData" [options]="segmentoChartOptions" [type]="segmentoChartType"></canvas>
+             </div>
+           </div>
+         </div>
+         <ng-template #noData>
+           <div class="empty-state-widget">
+             <mat-icon>inventory_2</mat-icon>
+             <p>Sin datos suficientes</p>
+           </div>
+         </ng-template>
+         <!--container-->
+         <!--container-->
       </div>
+
+      <div class="card widget-card">
+    <h3>TOP CLIENTES <span class="badge-top">Por compras</span></h3>
+    
+          <ul class="top-list" *ngIf="topClientes.length > 0; else noTop">
+              <li class="top-item" *ngFor="let cliente of topClientes; let i = index">
+                  <div class="top-row">
+                      <span class="top-index">{{ i + 1 }}</span>
+                      <div class="top-info">
+                          <div class="top-nombre">{{ cliente.nombre }} {{ cliente.apellido }}</div>
+                          <div class="progress-bg">
+                              <div class="progress-bar" 
+                                  [style.width.%]="((cliente.totalCompras || 0) / maxComprasTop) * 100">
+                              </div>
+                          </div>
+                      </div>
+                      <div class="top-compras">S/. {{ (cliente.totalCompras || 0) | number:'1.2-2' }}</div>
+                  </div>
+              </li>
+              <li class="top-item" style="border-bottom: none; padding-top: 10px;">
+                  <button class="btn-ver-mas" (click)="abrirModalTopClientes()">Ver ranking completo</button>
+              </li>
+          </ul>
+
+          <ng-template #noTop>
+              <div class="empty-state-widget">
+                  <mat-icon>inventory_2</mat-icon>
+                  <p>Sin datos suficientes</p>
+              </div>
+          </ng-template>
+      </div>
+
+      <div class="card widget-card">
+    <h3>ACTIVIDAD DEL DÍA</h3> <div *ngIf="actividadDelDia.length > 0; else noActividad" class="actividad-list">
+        <div class="actividad-item" *ngFor="let actividad of actividadDelDia">
+            <div class="actividad-icon">
+                <mat-icon [ngClass]="{
+                    'icon-green': actividad.texto.includes('Nuevo') || actividad.texto.includes('activado'),
+                    'icon-red': actividad.texto.includes('desactivado') || actividad.texto.includes('eliminado'),
+                    'icon-blue': actividad.texto.includes('actualizado')
+                }">history</mat-icon>
+            </div>
+            <div class="actividad-info">
+                <div class="actividad-texto">{{ actividad.texto }}</div>
+                <div class="actividad-fecha">{{ actividad.fecha | date:'HH:mm' }}</div> </div>
+        </div>
     </div>
 
-    <div class="right-section">
-      
-      <div class="card chart-section">
-        <h3>ANÁLISIS DE CARTERA</h3>
-        <div class="mini-chart-container">
-          <p class="chart-title">Distribución por Estado</p>
-          <div class="chart-wrapper-doughnut">
-            <canvas baseChart [data]="estadoChartData" [options]="estadoChartOptions" [type]="estadoChartType"></canvas>
-          </div>
-        </div>
-        <div class="divider"></div>
-        <div class="mini-chart-container">
-          <p class="chart-title">Segmentación (Compras)</p>
-          <div class="chart-wrapper-bar">
-            <canvas baseChart [data]="segmentoChartData" [options]="segmentoChartOptions" [type]="segmentoChartType"></canvas>
-          </div>
-        </div>
-      </div>
+    <button *ngIf="actividadCompleta.length > 0" class="btn-ver-mas" (click)="abrirModalActividad()">
+        Ver historial completo
+    </button>
 
-      <div class="card top-clientes">
-        <div class="top-header">
-          <h3>TOP CLIENTES</h3>
-          <span class="badge-top">Por compras</span>
+    <ng-template #noActividad>
+        <div class="empty-state-widget">
+            <mat-icon>schedule</mat-icon> <p>Sin movimientos hoy</p>
         </div>
-        <ul class="top-list">
-          <li class="top-item" *ngFor="let cliente of topClientes; let i = index">
-            <div class="top-row">
-              <span class="top-index">{{ i + 1 }}</span>
-              <div class="top-info">
-                <div class="top-nombre">{{ cliente.nombre }} {{ cliente.apellido }}</div>
-                <div class="progress-bg">
-                  <div class="progress-bar" [style.width.%]="((cliente.totalCompras || 0) / maxComprasTop) * 100"></div>
-                </div>
-              </div>
-              <div class="top-compras">S/. {{ (cliente.totalCompras || 0) | number:'1.0-0' }}</div>
-            </div>
-          </li>
-        </ul>
-      </div>
-
-      <div class="card actividad-reciente">
-        <h3>ACTIVIDAD RECIENTE</h3>
-        <div class="actividad-list">
-          <div class="actividad-item" *ngFor="let actividad of actividadReciente">
-            <div class="actividad-icon"><mat-icon>history</mat-icon></div>
-            <div class="actividad-info">
-              <div class="actividad-texto">{{ actividad.texto }}</div>
-              <div class="actividad-fecha">{{ actividad.fecha | date:'dd/MM HH:mm' }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
+    </ng-template>
+</div>
 
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" *ngIf="mostrarModal" (click)="cerrarModal()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
+  <div class="modal-content modal-venta" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h2>{{ clienteEditando ? 'Editar Cliente' : 'Nuevo Cliente' }}</h2>
       <button class="btn-cerrar" (click)="cerrarModal()"><mat-icon>close</mat-icon></button>
     </div>
-    <form class="cliente-form" (ngSubmit)="guardarCliente()" #formRef="ngForm">
-      <div class="form-scrollable-content">
+    <form novalidate class="venta-form" (ngSubmit)="guardarCliente()" #formRef="ngForm">
+      <div class="form-section">
         <div class="form-row">
           <div class="form-group">
             <label for="nombre">Nombre *</label>
-            <input type="text" id="nombre" name="nombre" [(ngModel)]="clienteForm.nombre" required class="form-input">
+            <input type="text" id="nombre" name="nombre" 
+                   [(ngModel)]="clienteForm.nombre" required class="form-input"
+                   [disabled]="clienteEditando !== null">
           </div>
           <div class="form-group">
             <label for="apellido">Apellido *</label>
-            <input type="text" id="apellido" name="apellido" [(ngModel)]="clienteForm.apellido" required class="form-input">
+            <input type="text" id="apellido" name="apellido" 
+                   [(ngModel)]="clienteForm.apellido" required class="form-input"
+                   [disabled]="clienteEditando !== null">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label for="dni">DNI *</label>
-            <input type="text" id="dni" name="dni" [(ngModel)]="clienteForm.dni" required maxlength="8" class="form-input">
+              <label for="dni">DNI *</label>
+              <input type="text" 
+                    id="dni" 
+                    name="dni" 
+                    [(ngModel)]="clienteForm.dni" 
+                    required 
+                    maxlength="8" 
+                    class="form-input"
+                    [disabled]="clienteEditando !== null"
+                    (keypress)="soloNumeros($event)"
+                    placeholder="Ej: 12345678">
           </div>
           <div class="form-group">
-            <label for="telefono">Teléfono</label>
-            <input type="text" id="telefono" name="telefono" [(ngModel)]="clienteForm.telefono" class="form-input">
+              <label for="telefono">Celular *</label> <input type="text" 
+                    id="telefono" 
+                    name="telefono" 
+                    [(ngModel)]="clienteForm.telefono" 
+                    class="form-input"
+                    maxlength="9" 
+                    (keypress)="soloNumeros($event)"
+                    placeholder="Ej: 987654321">
           </div>
         </div>
         <div class="form-group">
-          <label for="email">Correo</label>
-          <input type="email" id="email" name="email" [(ngModel)]="clienteForm.email" class="form-input">
-        </div>
+              <label for="email">Correo</label>
+              <input type="email" 
+                    id="email" 
+                    name="email" 
+                    [(ngModel)]="clienteForm.email" 
+                    class="form-input"
+                    maxlength="100"
+                    placeholder="ejemplo@correo.com">
+          </div>
         <div class="form-group">
           <label for="direccion">Dirección</label>
           <textarea id="direccion" name="direccion" [(ngModel)]="clienteForm.direccion" class="form-textarea" rows="2"></textarea>
@@ -208,9 +297,198 @@
       <div class="form-actions">
         <button type="button" class="btn-cancelar" (click)="cerrarModal()">Cancelar</button>
         <button type="submit" class="btn-guardar" [disabled]="!formRef.valid">
-          {{ clienteEditando ? 'Actualizar' : 'Guardar' }}
+          <mat-icon>save</mat-icon> {{ clienteEditando ? 'Actualizar' : 'Guardar' }}
         </button>
       </div>
     </form>
   </div>
+</div>
+<div class="modal-overlay" *ngIf="mostrarModalTopClientes" (click)="cerrarModalTopClientes()">
+    <div class="modal-content modal-ranking" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h2>Ranking de Clientes</h2>
+            <button class="btn-cerrar" (click)="cerrarModalTopClientes()"><mat-icon>close</mat-icon></button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="ranking-header">
+                <span style="font-weight: 600; color: #546e7a;">Posición</span>
+                <span style="font-weight: 600; color: #546e7a; flex: 1; padding-left: 15px;">Cliente y Volumen</span>
+                <span style="font-weight: 600; color: #546e7a;">Total</span>
+            </div>
+
+            <ul class="top-list full-list">
+                <li class="top-item" *ngFor="let cliente of clientesOrdenados; let i = index">
+                    <div class="top-row">
+                        <span class="top-index" [ngClass]="{'trofeo-oro': i===0, 'trofeo-plata': i===1, 'trofeo-bronce': i===2}">
+                            <mat-icon *ngIf="i < 3" style="font-size: 16px; width: 16px; height: 16px;">emoji_events</mat-icon>
+                            {{ i + 1 }}
+                        </span>
+                        
+                        <div class="top-info">
+                            <div class="top-nombre">{{ cliente.nombre }} {{ cliente.apellido }}</div>
+                            <div class="progress-bg">
+                                <div class="progress-bar" 
+                                     [ngClass]="{'bar-oro': i===0, 'bar-plata': i===1, 'bar-bronce': i===2}"
+                                     [style.width.%]="((cliente.totalCompras || 0) / maxComprasTop) * 100">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="top-compras">S/. {{ (cliente.totalCompras || 0) | number:'1.2-2' }}</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" *ngIf="mostrarModalActividad" (click)="cerrarModalActividad()">
+    <div class="modal-content modal-ranking" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h2>Historial de Actividad</h2>
+            <button class="btn-cerrar" (click)="cerrarModalActividad()"><mat-icon>close</mat-icon></button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="timeline-container">
+                <div class="timeline-item" *ngFor="let act of actividadReciente">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <span class="timeline-date">{{ act.fecha | date:'EEE dd MMM, yyyy' }}</span>
+                            <span class="timeline-time">{{ act.fecha | date:'HH:mm' }}</span>
+                        </div>
+                        <div class="timeline-body">
+                            {{ act.texto }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-overlay" *ngIf="mostrarModalCrecimiento" (click)="cerrarModalCrecimiento()">
+    <div class="modal-content modal-chart-large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h2>Crecimiento de Clientes</h2>
+            <button class="btn-cerrar" (click)="cerrarModalCrecimiento()"><mat-icon>close</mat-icon></button>
+        </div>
+        <div class="modal-body">
+            <p style="color: #666; margin-bottom: 20px;">Nuevos clientes registrados por mes (Últimos 6 meses)</p>
+            <div class="chart-container-modal">
+                <canvas baseChart 
+                    [data]="growthChartData" 
+                    [options]="growthChartOptions" 
+                    [type]="growthChartType">
+                </canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" *ngIf="mostrarModalActividad" (click)="cerrarModalActividad()">
+    <div class="modal-content modal-ranking" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h2>Bitácora de Actividad</h2>
+            <button class="btn-cerrar" (click)="cerrarModalActividad()"><mat-icon>close</mat-icon></button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="timeline-container">
+                
+                <div *ngFor="let grupo of historialAgrupado" class="timeline-group">
+                    
+                    <div class="date-separator">
+                        <span>{{ grupo.fecha }}</span>
+                    </div>
+
+                    <div class="timeline-item" *ngFor="let act of grupo.actividades">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content compact">
+                            <div class="timeline-row">
+                                <span class="time-badge">{{ act.fecha | date:'HH:mm' }}</span>
+                                <span class="text-body">{{ act.texto }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" *ngIf="mostrarModalTodosClientes" (click)="cerrarModalTodos()">
+    <div class="modal-content modal-full-table" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h2>Gestión Completa de Clientes</h2>
+            <button class="btn-cerrar" (click)="cerrarModalTodos()"><mat-icon>close</mat-icon></button>
+        </div>
+        <div class="modal-body">
+            <div class="lista-header" style="margin-bottom: 20px;">
+                <div class="controles-lista" style="width: 100%;">
+                    <div class="search-wrapper" style="flex: 1;">
+                        <mat-icon>search</mat-icon>
+                        <input type="text" placeholder="Buscar..." [(ngModel)]="searchTerm" (input)="buscarClientes()">
+                    </div>
+                    <div class="quick-filters">
+                        <button class="filter-chip" [class.active]="filtroActual === 'todos'" (click)="setFiltroRapido('todos')">Todos</button>
+                        <button class="filter-chip" [class.active]="filtroActual === 'activos'" (click)="setFiltroRapido('activos')">Activos</button>
+                        <button class="filter-chip" [class.active]="filtroActual === 'inactivos'" (click)="setFiltroRapido('inactivos')">Inactivos</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="clientes-table">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>DNI</th>
+                            <th>Contacto</th>
+                            <th>Email</th>
+                            <th style="text-align: right;">Compras</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let cliente of clientesFiltrados" class="cliente-row">
+                            <td class="cliente-info">
+                                <div class="cliente-wrapper">
+                                    <div class="cliente-avatar">{{ cliente.nombre.charAt(0) || 'C' }}{{ cliente.apellido.charAt(0) || '' }}</div>
+                                    <div class="cliente-datos">
+                                        <div class="cliente-nombre">{{ cliente.nombre }} {{ cliente.apellido }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="cliente-dni">{{ cliente.dni }}</td>
+                            <td class="cliente-contacto">
+                                <div class="dato-contacto">
+                                    <mat-icon style="font-size: 16px; width: 16px; height: 16px; color: #78909c;">phone_iphone</mat-icon> {{ cliente.celular || cliente.telefono || '-' }}
+                                </div>
+                                </td>
+                            <td class="cliente-email-cell">{{ cliente.email || 'No registrado' }}</td>
+                            <td style="text-align: right; font-weight: 600; color: #303F9F;">S/. {{ (cliente.totalCompras || 0) | number:'1.2-2' }}</td>
+                            <td>
+                                <span class="estado-badge" [ngClass]="'estado-' + (cliente.estado || 'activo').toLowerCase()">{{ (cliente.estado || 'activo') | titlecase }}</span>
+                            </td>
+                            <td class="cliente-acciones">
+                                <button class="btn-accion btn-editar" (click)="editarCliente(cliente); cerrarModalTodos()" title="Editar"><mat-icon>edit</mat-icon></button>
+                                
+                                <button class="btn-accion" 
+                                        [class.btn-eliminar]="cliente.estado === 'activo'"
+                                        [class.btn-activar]="cliente.estado !== 'activo'"
+                                        (click)="cambiarEstado(cliente)" 
+                                        [title]="cliente.estado === 'activo' ? 'Desactivar' : 'Activar'">
+                                    <mat-icon>{{ cliente.estado === 'activo' ? 'block' : 'check_circle' }}</mat-icon>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>

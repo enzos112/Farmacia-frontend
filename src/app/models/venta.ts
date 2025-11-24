@@ -1,35 +1,48 @@
+import { Cliente } from './cliente';
+import { Producto } from './producto';
+import { Usuario } from './usuario'; // Asegúrate de importar Usuario si tienes el modelo, sino usa any
+
 export interface Venta {
-  id?: number;
-  numeroVenta: string;
-  fechaVenta: Date;
+  idVenta?: number;
+  numComprobante: string;
+  fechaVenta: string;
+  condicionPago: string;
+  total: number;
+  impuesto: number;
+  estado: 'REGISTRADA' | 'ANULADA' | string;
   
-  clienteId?: number;
+  cliente?: Cliente;      
+  
+  // --- CORRECCIÓN 1: Agregamos el usuario (vendedor) ---
+  usuario?: Usuario;  // O usa 'any' si no quieres importar el modelo Usuario
+
+  detalleVenta: DetalleVenta[]; 
+
+  // Campos opcionales de compatibilidad
   clienteNombre?: string;
   clienteDni?: string;
-  
-  vendedorId?: number;
   vendedorNombre?: string;
-  
-  subtotal: number;
-  igv: number;
-  total: number;
-  
-  metodoPago: 'efectivo' | 'tarjeta' | 'transferencia' | string;
-  
-  // Incluimos 'oculta' para que TypeScript no se queje
-  estado: 'REGISTRADA' | 'ANULADA' | 'completada' | 'pendiente' | 'cancelada' | 'devuelta' | 'oculta';
-  
-  observaciones?: string;
-  detalles: DetalleVenta[];
 }
 
+// ... (El resto del archivo DetalleVenta, VentaDTO, etc. déjalo igual)
 export interface DetalleVenta {
-  id?: number; // Agregamos ID opcional para datos mock
-  productoId: number;
-  productoNombre: string;
+  idDetalleVenta?: number;
+  producto?: Producto; 
+  productoId?: number;
+  productoNombre?: string;
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
+}
+
+export interface VentaDTO {
+  idCliente: number;
+  items: DetalleVentaDTO[];
+}
+
+export interface DetalleVentaDTO {
+  idProducto: number;
+  cantidad: number;
 }
 
 export interface VentaStats {
@@ -41,19 +54,16 @@ export interface VentaStats {
   ingresosTotales: number;
 }
 
-// Esta interfaz faltaba y causaba el error TS2305
-export interface VentaResumen {
-  fecha: string;
-  total: number;
-}
-
 export interface ProductoVenta {
   id: number;
+  idProducto: number;
   nombre: string;
   precio: number;
   stock: number;
-  descripcion?: string; // Agregamos descripción opcional
-  cantidadSeleccionada?: number; // Para selección en modal
+  cantidadSeleccionada?: number;
+  // Agrega campos opcionales para evitar conflictos de tipos
+  descripcion?: string;
+  precioVenta?: number;
 }
 
 export interface ClienteVenta {
