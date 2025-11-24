@@ -3,3 +3,15 @@
 * {
   font-family: 'Roboto', sans-serif;
 }
+
+:root {
+  --primary-color: #303F9F;
+  --primary-dark: #1a237e;
+  --card-bg: #ffffff;
+  --card-radius: 16px;
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  --muted: #6c757d;
+  --muted-2: #95a5a6;
+  --success: #16a34a;
+  --danger: #dc3545;
+}

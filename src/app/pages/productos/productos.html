@@ -1,73 +1,71 @@
 <div class="productos-container">
-  <!-- Sección de búsqueda y filtros -->
-  <div class="search-section" *ngIf="!mostrarCategorias && !mostrarUnidades">
-    <div class="search-filters">
-      <div class="filter-group">
-        <label class="filter-label">Término de búsqueda</label>
-        <input 
-          type="text" 
-          class="search-input" 
-          placeholder="Buscar por nombre"
-          [(ngModel)]="searchTerm">
-      </div>
-      
-      <div class="filter-group">
-        <label class="filter-label">Filtrar por Stock</label>
-        <select class="stock-filter" [(ngModel)]="stockFilter">
-          <option value="">Todos</option>
-          <option value="sin-stock">Sin Stock</option>
-          <option value="stock-bajo">Stock Bajo</option>
-          <option value="con-stock">Con Stock</option>
-        </select>
-      </div>
-
-      <div class="filter-actions">
-        <button class="btn-buscar" (click)="buscarProductos()">
-          <span class="icon-search"></span> Buscar
-        </button>
-        <button class="btn-limpiar" (click)="limpiarFiltros()">
-          <span class="icon-clean"></span> Limpiar
-        </button>
-      </div>
+  <!-- Header -->
+  <div class="productos-header-main">
+    <div class="header-text">
+      <p class="welcome-text">GESTIÓN DE</p>
+      <h1 class="page-title-main">{{ pageTitle }}</h1>
+    </div>
+    <div class="header-actions-main">
+      <button class="btn-reporte-stock" (click)="reporteStockBajo()">
+        <mat-icon>warning</mat-icon> Reporte Stock Bajo
+      </button>
+      <button class="btn-nuevo-producto" (click)="nuevoProducto()">
+        <mat-icon>add</mat-icon> Nuevo Producto
+      </button>
+      <button class="btn-categorias" (click)="verCategorias()">
+        <mat-icon>category</mat-icon> Categorías
+      </button>
+      <button class="btn-unidades-medida" (click)="verUnidadesMedida()">
+        <mat-icon>straighten</mat-icon> Unidades de Medida
+      </button>
     </div>
   </div>
 
-  <!-- Header con título y botones de acción -->
-  <div class="productos-header">
-    <h2 class="page-title">{{ pageTitle }}</h2>
-    <div class="header-actions">
-      <button class="btn-reporte-stock" (click)="reporteStockBajo()">
-        <span class="icon-warning"></span> Reporte Stock Bajo
-      </button>
-      <button class="btn-nuevo-producto" (click)="nuevoProducto()">
-        <span class="icon-add"></span> Nuevo Producto
-      </button>
-      <button class="btn-categorias" (click)="verCategorias()">
-        <span class="icon-category"></span> Categorías
-      </button>
-      <button class="btn-unidades-medida" (click)="verUnidadesMedida()">
-        <span class="icon-units"></span> Unidades de Medida
-      </button>
+  <!-- Sección de búsqueda y filtros -->
+  <div class="search-section" *ngIf="!mostrarCategorias && !mostrarUnidades">
+    <div class="controles-lista">
+      <div class="search-wrapper">
+        <mat-icon>search</mat-icon>
+        <input
+          type="text"
+          placeholder="Buscar por nombre..."
+          [(ngModel)]="searchTerm"
+          (input)="buscarProductos()"
+          title="Buscar productos"
+        >
+      </div>
+
+      <select class="filtro-estado" [(ngModel)]="categoriaFilter" (ngModelChange)="buscarProductos()" title="Filtrar por categoría">
+        <option value="">Todas las categorías</option>
+        <option *ngFor="let cat of categoriasGestion" [value]="cat.nombre">{{ cat.nombre }}</option>
+      </select>
+      
+      <select class="filtro-estado" [(ngModel)]="stockFilter" (ngModelChange)="buscarProductos()" title="Filtrar por stock">
+        <option value="">Todos los productos</option>
+        <option value="sin-stock">Sin Stock</option>
+        <option value="stock-bajo">Stock Bajo</option>
+        <option value="con-stock">Con Stock</option>
+      </select>
     </div>
   </div>
 
   <!-- Botón debajo del título cuando estamos en Categorías -->
   <div class="sub-actions" *ngIf="mostrarCategorias">
     <button class="btn-nueva-categoria" (click)="nuevoCategoria()">
-      <span class="icon-add"></span> Nueva Categoría
+      <mat-icon>add</mat-icon> Nueva Categoría
     </button>
     <button class="btn-ver-productos" (click)="verProductos()">
-      <span class="icon-list"></span> Lista de Productos
+      <mat-icon>list</mat-icon> Lista de Productos
     </button>
   </div>
 
   <!-- Botón debajo del título cuando estamos en Unidades de Medida -->
   <div class="sub-actions" *ngIf="mostrarUnidades">
     <button class="btn-nueva-unidad" (click)="nuevaUnidad()">
-      <span class="icon-add"></span> Crear Nueva Unidad
+      <mat-icon>add</mat-icon> Crear Nueva Unidad
     </button>
     <button class="btn-ver-productos" (click)="verProductos()">
-      <span class="icon-list"></span> Lista de Productos
+      <mat-icon>list</mat-icon> Lista de Productos
     </button>
   </div>
 
@@ -86,17 +84,17 @@
       <tbody>
         <tr *ngFor="let producto of productosFiltrados" class="producto-row">
           <td class="producto-nombre" data-label="Nombre">{{ producto.nombre }}</td>
-          <td class="producto-categoria" data-label="Categoría">{{ getCategoria(producto) }}</td>
-          <td class="producto-stock" data-label="Stock" [ngClass]="getStockClass(producto.stock)">
+          <td class="producto-categoria" data-label="Categoría">{{ getCategoriaNombre(producto) }}</td>
+          <td class="producto-stock" data-label="Stock" [ngClass]="getStockClass(producto.stock, producto.stockminimo)">
             {{ producto.stock.toFixed(2) }}
           </td>
-          <td class="producto-precio" data-label="Precio">${{ producto.precioVenta.toFixed(2) }}</td>
+          <td class="producto-precio" data-label="Precio">S/. {{ producto.precioMayor.toFixed(2) }}</td>
           <td class="producto-acciones" data-label="Acciones">
             <button class="btn-accion btn-editar" (click)="editarProducto(producto)" title="Editar">
-              Editar
+              <mat-icon>edit</mat-icon>
             </button>
             <button class="btn-accion btn-eliminar" (click)="eliminarProducto(producto)" title="Eliminar">
-              Eliminar
+              <mat-icon>delete</mat-icon>
             </button>
           </td>
         </tr>
@@ -128,10 +126,10 @@
           <td class="producto-nombre" data-label="Nombre">{{ cat.nombre }}</td>
           <td class="producto-acciones" data-label="Acciones">
             <button class="btn-accion btn-editar" (click)="editarCategoria(cat)" title="Editar">
-              Editar
+              <mat-icon>edit</mat-icon>
             </button>
             <button class="btn-accion btn-eliminar" (click)="eliminarCategoria(cat)" title="Eliminar">
-              Eliminar
+              <mat-icon>delete</mat-icon>
             </button>
           </td>
         </tr>
@@ -158,10 +156,10 @@
           <td class="producto-categoria" data-label="Símbolo">{{ u.simbolo }}</td>
           <td class="producto-acciones" data-label="Acciones">
             <button class="btn-accion btn-editar" (click)="editarUnidad(u)" title="Editar">
-              Editar
+              <mat-icon>edit</mat-icon>
             </button>
             <button class="btn-accion btn-eliminar" (click)="eliminarUnidad(u)" title="Eliminar">
-              Eliminar
+              <mat-icon>delete</mat-icon>
             </button>
           </td>
         </tr>
@@ -199,138 +197,144 @@
           <!-- Fila 2: Descripción -->
           <div class="form-row">
             <div class="form-group full-width">
-              <label class="form-label">Descripción</label>
+              <label class="form-label">Descripción *</label>
               <textarea 
-                class="form-control form-textarea" 
+                class="form-control" 
                 [(ngModel)]="productoForm.descripcion"
                 name="descripcion"
                 rows="2"
-                placeholder=""></textarea>
+                placeholder="Descripción del producto"
+                required></textarea>
             </div>
           </div>
 
-          <!-- Fila 3: Categoría y Unidad de Medida -->
+          <!-- Fila 3: Código de Barras y Laboratorio -->
           <div class="form-row two-cols">
             <div class="form-group">
-              <label class="form-label">Categoría</label>
-              <select 
+              <label class="form-label">Código de Barras *</label>
+              <input 
+                type="text" 
                 class="form-control" 
-                [(ngModel)]="productoForm.categoria"
-                name="categoria">
-                <option value="">-- Seleccione Categoría --</option>
-                <option *ngFor="let cat of categoriasGestion" [value]="cat.nombre">{{ cat.nombre }}</option>
-              </select>
+                [(ngModel)]="productoForm.codBarras"
+                name="codBarras"
+                placeholder="Código de barras"
+                required>
             </div>
             <div class="form-group">
-              <label class="form-label">Unidad de Medida</label>
-              <select 
-                class="form-control" 
-                [(ngModel)]="productoForm.unidadMedida"
-                name="unidadMedida">
-                <option value="">-- Seleccione Unidad --</option>
-                <option value="Caja">Caja</option>
-                <option value="Frasco">Frasco</option>
-                <option value="Paquete">Paquete</option>
-                <option value="Tabletas">Tabletas</option>
-                <option value="Tubo">Tubo</option>
-                <option value="Unidad">Unidad</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Fila 4: Laboratorio, Presentación y Ubicación -->
-          <div class="form-row three-cols">
-            <div class="form-group">
-              <label class="form-label">Laboratorio</label>
+              <label class="form-label">Laboratorio *</label>
               <input 
                 type="text" 
                 class="form-control" 
                 [(ngModel)]="productoForm.laboratorio"
                 name="laboratorio"
-                placeholder="">
+                placeholder="Nombre del laboratorio"
+                required>
+            </div>
+          </div>
+
+          <!-- Fila 4: Categoría y Unidad de Medida -->
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label class="form-label">Categoría *</label>
+              <select 
+                class="form-control" 
+                [(ngModel)]="productoForm.idCategoria"
+                name="idCategoria"
+                required>
+                <option [value]="0">-- Seleccione Categoría --</option>
+                <option *ngFor="let cat of categoriasGestion" [value]="cat.idCategoria">{{ cat.nombre }}</option>
+              </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Presentación</label>
-              <input 
-                type="text" 
+              <label class="form-label">Unidad de Medida *</label>
+              <select 
                 class="form-control" 
-                [(ngModel)]="productoForm.presentacion"
-                name="presentacion"
-                placeholder="">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Ubicación</label>
-              <input 
-                type="text" 
-                class="form-control" 
-                [(ngModel)]="productoForm.ubicacion"
-                name="ubicacion"
-                placeholder="">
+                [(ngModel)]="productoForm.idUnidadMedida"
+                name="idUnidadMedida"
+                required>
+                <option [value]="0">-- Seleccione Unidad --</option>
+                <option *ngFor="let u of unidadesGestion" [value]="u.idUnidadMedida">{{ u.nombre }} ({{ u.simbolo }})</option>
+              </select>
             </div>
           </div>
 
           <!-- Fila 5: Precios -->
-          <div class="form-row three-cols">
+          <div class="form-row two-cols">
             <div class="form-group">
-              <label class="form-label">Precio al por Menor</label>
+              <label class="form-label">Precio Compra *</label>
               <input 
                 type="number" 
                 class="form-control" 
                 [(ngModel)]="productoForm.precioCompra"
                 name="precioCompra"
                 step="0.01"
-                placeholder="0.00">
+                placeholder="0.00"
+                required>
             </div>
             <div class="form-group">
-              <label class="form-label">Precio de Compra</label>
+              <label class="form-label">Precio Menor *</label>
               <input 
                 type="number" 
                 class="form-control" 
-                [(ngModel)]="productoForm.precioVenta"
-                name="precioVenta"
+                [(ngModel)]="productoForm.precioMenor"
+                name="precioMenor"
                 step="0.01"
-                placeholder="0.00">
+                placeholder="0.00"
+                required>
             </div>
+          </div>
+
+          <!-- Fila 6: Precio Mayor -->
+          <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Precio al por Mayor</label>
+              <label class="form-label">Precio Mayor *</label>
               <input 
                 type="number" 
                 class="form-control" 
                 [(ngModel)]="productoForm.precioMayor"
                 name="precioMayor"
                 step="0.01"
-                placeholder="0.00">
+                placeholder="0.00"
+                required>
             </div>
           </div>
 
-          <!-- Fila 6: Stock, Stock Mínimo y Fecha de Vencimiento -->
-          <div class="form-row three-cols">
+          <!-- Fila 7: Stock y Stock Mínimo -->
+          <div class="form-row two-cols">
             <div class="form-group">
-              <label class="form-label">Stock</label>
+              <label class="form-label">Stock *</label>
               <input 
                 type="number" 
                 class="form-control" 
                 [(ngModel)]="productoForm.stock"
                 name="stock"
-                placeholder="0.00">
+                step="0.01"
+                placeholder="0.00"
+                required>
             </div>
             <div class="form-group">
-              <label class="form-label">Stock Mínimo</label>
+              <label class="form-label">Stock Mínimo *</label>
               <input 
                 type="number" 
                 class="form-control" 
-                [(ngModel)]="productoForm.stockMinimo"
-                name="stockMinimo"
-                placeholder="0.00">
+                [(ngModel)]="productoForm.stockminimo"
+                name="stockminimo"
+                step="0.01"
+                placeholder="0.00"
+                required>
             </div>
+          </div>
+
+          <!-- Fila 8: Fecha de Vencimiento -->
+          <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Fecha de Vencimiento</label>
+              <label class="form-label">Fecha de Vencimiento *</label>
               <input 
                 type="date" 
                 class="form-control" 
                 [(ngModel)]="productoForm.fechaVencimiento"
                 name="fechaVencimiento"
-                placeholder="dd/mm/aaaa">
+                required>
             </div>
           </div>
         </form>
@@ -400,7 +404,7 @@
                   <td>{{ i + 1 }}</td>
                   <td class="producto-nombre">{{ producto.nombre }}</td>
                   <td class="stock-cero">{{ producto.stock }}</td>
-                  <td class="producto-precio">${{ producto.precioVenta.toFixed(2) }}</td>
+                  <td class="producto-precio">${{ producto.precioMayor.toFixed(2) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -432,8 +436,8 @@
                 <tr *ngFor="let producto of productosStockBajo; let i = index">
                   <td>{{ i + 1 }}</td>
                   <td class="producto-nombre">{{ producto.nombre }}</td>
-                  <td class="stock-bajo">{{ producto.stock }} unidades</td>
-                  <td class="producto-precio">${{ producto.precioVenta.toFixed(2) }}</td>
+                  <td class="stock-bajo">{{ producto.stock }}</td>
+                  <td class="producto-precio">${{ producto.precioMayor.toFixed(2) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -448,12 +452,6 @@
       </div>
 
       <div class="modal-footer">
-        <button 
-          class="btn-filtrar" 
-          (click)="filtrarStockBajo()"
-          *ngIf="productosSinStock.length > 0 || productosStockBajo.length > 0">
-          <span class="icon-filter"></span> Filtrar Productos con Stock Bajo
-        </button>
         <button class="btn-cancelar" (click)="cerrarReporteModal()">Cerrar</button>
       </div>
     </div>
@@ -463,7 +461,7 @@
   <div class="modal-overlay" *ngIf="showCategoriaModal" (click)="cerrarCategoriaModal()">
     <div class="modal-container modal-simple" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2 class="modal-title">{{ modoEdicionCategoria ? 'Editar Categoría' : 'Nueva Categoría' }}</h2>
+        <h2 class="modal-title">{{ categoriaEditando ? 'Editar Categoría' : 'Nueva Categoría' }}</h2>
         <button class="btn-close" (click)="cerrarCategoriaModal()">✕</button>
       </div>
 
@@ -485,7 +483,7 @@
 
       <div class="modal-footer">
         <button class="btn-guardar" (click)="guardarCategoria()">
-          {{ modoEdicionCategoria ? 'Actualizar' : 'Guardar' }}
+          {{ categoriaEditando ? 'Actualizar' : 'Guardar' }}
         </button>
         <button class="btn-cancelar" (click)="cerrarCategoriaModal()">Cancelar</button>
       </div>
@@ -496,7 +494,7 @@
   <div class="modal-overlay" *ngIf="showUnidadModal" (click)="cerrarUnidadModal()">
     <div class="modal-container modal-simple" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2 class="modal-title">{{ modoEdicionUnidad ? 'Editar Unidad de Medida' : 'Nueva Unidad de Medida' }}</h2>
+        <h2 class="modal-title">{{ unidadEditando ? 'Editar Unidad de Medida' : 'Nueva Unidad de Medida' }}</h2>
         <button class="btn-close" (click)="cerrarUnidadModal()">✕</button>
       </div>
 
@@ -530,7 +528,7 @@
 
       <div class="modal-footer">
         <button class="btn-guardar" (click)="guardarUnidad()">
-          {{ modoEdicionUnidad ? 'Actualizar' : 'Guardar' }}
+          {{ unidadEditando ? 'Actualizar' : 'Guardar' }}
         </button>
         <button class="btn-cancelar" (click)="cerrarUnidadModal()">Cancelar</button>
       </div>
@@ -555,3 +553,27 @@
     </div>
   </div>
 </div>
+
+<!-- Modal de Confirmación -->
+<div class="modal-overlay" *ngIf="showConfirmModal" (click)="cerrarConfirmModal()">
+  <div class="modal-container modal-simple modal-confirm" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">{{ confirmModalData.title }}</h2>
+      <button class="btn-close" (click)="cerrarConfirmModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <p class="confirm-message">{{ confirmModalData.message }}</p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-confirmar" (click)="confirmModalData.onConfirm()">
+        Confirmar
+      </button>
+      <button class="btn-cancelar" (click)="cerrarConfirmModal()">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+

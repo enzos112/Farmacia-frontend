@@ -15,7 +15,7 @@ export class VentaService {
     {
       id: 1,
       numeroVenta: 'V-0001',
-      fechaVenta: new Date('2025-11-18T10:00:00'), // Fecha reciente
+      fechaVenta: new Date('2025-11-20T10:00:00'), // Hoy
       clienteId: 1,
       clienteNombre: 'Juan Pérez',
       clienteDni: '12345678',
@@ -34,7 +34,7 @@ export class VentaService {
     {
       id: 2,
       numeroVenta: 'V-0002',
-      fechaVenta: new Date('2025-11-19T15:30:00'), // Fecha reciente
+      fechaVenta: new Date('2025-11-20T15:30:00'), // Hoy
       clienteId: 2,
       clienteNombre: 'Maria Gomez',
       clienteDni: '87654321',
@@ -44,10 +44,29 @@ export class VentaService {
       igv: 5.4,
       total: 35.4,
       metodoPago: 'tarjeta',
-      estado: 'oculta',
+      estado: 'completada',
       observaciones: '',
       detalles: [
         { id: 2, productoId: 2, productoNombre: 'Ibuprofeno', cantidad: 3, precioUnitario: 10, subtotal: 30 }
+      ]
+    },
+    {
+      id: 3,
+      numeroVenta: 'V-0003',
+      fechaVenta: new Date('2025-11-20T16:45:00'), // Hoy
+      clienteId: 3,
+      clienteNombre: 'Carlos López',
+      clienteDni: '11223344',
+      vendedorId: 1,
+      vendedorNombre: 'Admin',
+      subtotal: 45,
+      igv: 8.1,
+      total: 53.1,
+      metodoPago: 'efectivo',
+      estado: 'completada',
+      observaciones: '',
+      detalles: [
+        { id: 3, productoId: 3, productoNombre: 'Vitamina C', cantidad: 3, precioUnitario: 15, subtotal: 45 }
       ]
     }
   ];
@@ -62,7 +81,9 @@ export class VentaService {
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const ventasHoy = ventas.filter(v => new Date(v.fechaVenta).toDateString() === today.toDateString()).length;
+    const ventasDelDiaArray = ventas.filter(v => new Date(v.fechaVenta).toDateString() === today.toDateString());
+    const ventasHoy = ventasDelDiaArray.length;
+    const ventasHoyMonto = ventasDelDiaArray.reduce((sum, v) => sum + v.total, 0);
 
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
@@ -79,6 +100,7 @@ export class VentaService {
     const stats: VentaStats = {
       totalVentas,
       ventasHoy,
+      ventasHoyMonto,
       ventasMes,
       promedioVenta,
       ventasPendientes,

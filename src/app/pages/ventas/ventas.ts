@@ -42,6 +42,7 @@ export class VentasComponent implements OnInit {
   ventaStats: VentaStats = {
     totalVentas: 0,
     ventasHoy: 0,
+    ventasHoyMonto: 0,
     ventasMes: 0,
     promedioVenta: 0,
     ventasPendientes: 0,

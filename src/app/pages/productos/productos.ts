@@ -1,519 +1,560 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import { Producto } from '../../models/producto';
+import { ProductoService } from '../../services/producto-service';
+import { CategoriaService, Categoria } from '../../services/categoria.service';
+import { UnidadMedidaService, UnidadMedida } from '../../services/unidad-medida.service';
 
 @Component({
   selector: 'app-productos',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatIconModule],
   templateUrl: './productos.html',
   styleUrls: ['./productos.css']
 })
 export class ProductosComponent implements OnInit {
-  // Título dinámico
-  pageTitle: string = 'Listado de Productos';
-
-  // Vistas alternas
-  mostrarCategorias: boolean = false;
-  mostrarUnidades: boolean = false;
-  // Variables de búsqueda y filtrado
-  searchTerm: string = '';
-  stockFilter: string = '';
   
-  // Datos
+  // Datos principales
   productos: Producto[] = [];
   productosFiltrados: Producto[] = [];
+  isLoading = false;
   
-  // Estado de carga
-  isLoading: boolean = false;
+  // Filtros y búsqueda
+  searchTerm: string = '';
+  stockFilter: string = '';
+  categoriaFilter: string = '';
   
-  // Categorías disponibles
-  categorias: string[] = [
-    'Analgésicos y Antiinflamatorios',
-    'Antibióticos',
-    'Antigripales y Antialérgicos',
-    'Vitaminas y Suplementos',
-    'Cuidado Gástrico',
-    'Cuidado Personal e Higiene',
-    'Primeros Auxilios',
-    'Cuidado del Bebé',
-    'Equipos Médicos',
-    'Cosméticos y Belleza',
-    'Medicamentos'
-  ];
+  // Modales
+  showModal = false;
+  showReporteModal = false;
+  showCategoriaModal = false;
+  showUnidadModal = false;
+  showAlertModal = false;
+  showConfirmModal = false;
   
-  // Estados
-  showModal: boolean = false;
-  modoEdicion: boolean = false;
-  showReporteModal: boolean = false;
-  showCategoriaModal: boolean = false;
-  showUnidadModal: boolean = false;
-  showAlertModal: boolean = false;
-  
-  // Mensaje de alerta
-  alertMessage: string = '';
-  alertTitle: string = 'Notificación';
-  
-  // Datos del reporte
-  productosSinStock: Producto[] = [];
-  productosStockBajo: Producto[] = [];
+  // Estados de vista
+  modoEdicion = false;
+  mostrarCategorias = false;
+  mostrarUnidades = false;
+  pageTitle = 'Productos';
   
   // Formularios
-  categoriaForm: any = {
-    nombre: ''
-  };
-  
-  unidadForm: any = {
-    nombre: '',
-    simbolo: ''
-  };
-  
-  modoEdicionCategoria: boolean = false;
-  modoEdicionUnidad: boolean = false;
-
-  /**
-   * Muestra un mensaje de alerta personalizado
-   */
-  mostrarAlerta(mensaje: string, titulo: string = 'Notificación') {
-    this.alertMessage = mensaje;
-    this.alertTitle = titulo;
-    this.showAlertModal = true;
-  }
-
-  /**
-   * Cierra el modal de alerta
-   */
-  cerrarAlerta() {
-    this.showAlertModal = false;
-    this.alertMessage = '';
-  }
-  
-  // Formulario de producto
+  productoEditando: Producto | null = null;
   productoForm: any = {
     nombre: '',
     descripcion: '',
-    precioVenta: 0,
-    stock: 0
+    codBarras: '',
+    laboratorio: '',
+    precioCompra: 0,
+    precioMenor: 0,
+    precioMayor: 0,
+    stock: 0,
+    stockminimo: 0,
+    fechaVencimiento: '',
+    idCategoria: 0,
+    idUnidadMedida: 0
   };
-
-
-  ngOnInit() {
-    // Cargar datos de prueba
-    this.cargarDatosPrueba();
+  
+  // Gestión de categorías y unidades (cargadas del backend)
+  categoriasGestion: Categoria[] = [];
+  unidadesGestion: UnidadMedida[] = [];
+  
+  categoriaForm = { nombre: '' };
+  unidadForm = { nombre: '', simbolo: '' };
+  categoriaEditando: any = null;
+  unidadEditando: any = null;
+  
+  // Reporte de stock
+  productosSinStock: Producto[] = [];
+  productosStockBajo: Producto[] = [];
+  
+  // Modal de alerta
+  alertTitle = '';
+  alertMessage = '';
+  
+  // Modal de confirmación
+  confirmModalData = {
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  };
+  
+  constructor(
+    private productoService: ProductoService,
+    private categoriaService: CategoriaService,
+    private unidadMedidaService: UnidadMedidaService
+  ) {}
+  
+  ngOnInit(): void {
+    this.cargarProductos();
+    this.cargarCategorias();
+    this.cargarUnidades();
   }
-
-  /**
-   * Datos de prueba para desarrollo
-   */
-  cargarDatosPrueba() {
-    this.productos = [
-      { idProducto: 1,  nombre: 'Alcohol 70° 250ml',                   descripcion: 'Antiséptico de uso externo',                 stock: 60.00,  precioVenta: 5.00 },
-      { idProducto: 2,  nombre: 'Amoxicilina 500mg',                   descripcion: 'Antibiótico de amplio espectro',             stock: 29.00,  precioVenta: 25.00 },
-      { idProducto: 3,  nombre: 'Aspirina',                            descripcion: 'Analgésico',                                  stock: 120.00, precioVenta: 5.50 },
-      { idProducto: 4,  nombre: 'Aspirina 100mg',                      descripcion: 'Analgésico baja dosis',                       stock: 173.00, precioVenta: 1.00 },
-      { idProducto: 5,  nombre: 'Azitromicina 200mg/5ml Suspensión',  descripcion: 'Antibiótico en suspensión',                    stock: 15.00,  precioVenta: 25.00 },
-      { idProducto: 6,  nombre: 'Complejo B',                          descripcion: 'Vitaminas del complejo B',                    stock: 138.00, precioVenta: 20.00 },
-      { idProducto: 7,  nombre: 'Crema para escaldaduras Desitin',     descripcion: 'Cuidado de la piel del bebé',                 stock: 49.00,  precioVenta: 21.50 },
-      { idProducto: 8,  nombre: 'Curitas Clásicas',                    descripcion: 'Apósito adhesivo para pequeñas heridas',      stock: 100.00, precioVenta: 4.00 },
-      { idProducto: 9,  nombre: 'Diclofenaco Gel 1%',                  descripcion: 'Gel tópico antiinflamatorio',                 stock: 25.00,  precioVenta: 15.00 },
-      { idProducto: 10, nombre: 'Dolocordralan',                       descripcion: 'Analgésico/antiinflamatorio',                 stock: 0.00,   precioVenta: 4.50 },
-      { idProducto: 11, nombre: 'Don gripa',                           descripcion: 'Antigripal',                                  stock: 0.00,  precioVenta: 1.50 },
-      { idProducto: 12, nombre: 'Gripa',                               descripcion: 'Analgésico para síntomas de gripe',           stock: 6.00,   precioVenta: 12.00 },
-      { idProducto: 13, nombre: 'Ibuprofeno 400mg',                    descripcion: 'Antiinflamatorio no esteroideo (AINE)',       stock: 27.00,  precioVenta: 2.00 },
-      { idProducto: 14, nombre: 'Jabón Antibacterial Protex',          descripcion: 'Cuidado e higiene personal',                  stock: 20.00,  precioVenta: 4.00 },
-      { idProducto: 15, nombre: 'Loratadina 10mg',                     descripcion: 'Antialérgico',                                stock: 500.00, precioVenta: 0.50 },
-      { idProducto: 16, nombre: 'Naproxeno sodico',                    descripcion: 'Analgésico y antiinflamatorio (AINE)',        stock: 0.00,  precioVenta: 5.00 }
-    ];
-    this.productosFiltrados = [...this.productos];
-  }
-
-  /**
-   * Busca productos según los filtros aplicados
-   */
-  buscarProductos() {
-    this.productosFiltrados = this.productos.filter(producto => {
-      // Filtro por término de búsqueda
-      const matchesSearch = !this.searchTerm || 
-        producto.nombre.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        (producto.descripcion && producto.descripcion.toLowerCase().includes(this.searchTerm.toLowerCase()));
-      
-      // Filtro por stock
-      const matchesStock = !this.stockFilter ||
-        (this.stockFilter === 'sin-stock' && producto.stock === 0) ||
-        (this.stockFilter === 'stock-bajo' && producto.stock > 0 && producto.stock <= 10) ||
-        (this.stockFilter === 'con-stock' && producto.stock > 10);
-      
-      return matchesSearch && matchesStock;
+  
+  cargarProductos(): void {
+    this.isLoading = true;
+    this.productoService.findAll().subscribe({
+      next: (data) => {
+        console.log('📦 Productos recibidos del backend:', data);
+        if (data.length > 0) {
+          console.log('📝 Estructura del primer producto:', data[0]);
+        }
+        this.productos = data;
+        this.productosFiltrados = [...this.productos];
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.isLoading = false;
+        
+        if (err.status === 403) {
+          this.mostrarAlerta('Error de Autenticación', 'No tienes permisos para acceder. Por favor inicia sesión nuevamente.');
+        } else if (err.status === 0) {
+          this.mostrarAlerta('Error de Conexión', 'No se puede conectar con el servidor. Verifica que el backend esté corriendo en http://localhost:8080');
+        } else {
+          this.mostrarAlerta('Error', `No se pudieron cargar los productos: ${err.message || err.statusText}`);
+        }
+      }
     });
   }
 
-  /**
-   * Limpia todos los filtros y muestra todos los productos
-   */
-  limpiarFiltros() {
-    this.searchTerm = '';
-    this.stockFilter = '';
-    this.productosFiltrados = [...this.productos];
+  cargarCategorias(): void {
+    this.categoriaService.findAll().subscribe({
+      next: (data) => {
+        console.log('📂 Categorías recibidas del backend:', data);
+        this.categoriasGestion = data;
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar categorías:', error);
+        this.mostrarAlerta('Error', 'No se pudieron cargar las categorías');
+      }
+    });
   }
 
-  /**
-   * Retorna la clase CSS según el nivel de stock
-   */
-  getStockClass(stock: number): string {
-    // Tratar negativos como sin stock
-    if (stock <= 0) return 'stock-cero';
-    if (stock <= 10) return 'stock-bajo';
-    return 'stock-ok';
+  cargarUnidades(): void {
+    this.unidadMedidaService.findAll().subscribe({
+      next: (data) => {
+        console.log('📏 Unidades de medida recibidas del backend:', data);
+        this.unidadesGestion = data;
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar unidades de medida:', error);
+        this.mostrarAlerta('Error', 'No se pudieron cargar las unidades de medida');
+      }
+    });
   }
-
-  getCategoria(producto: Producto): string {
-    const nombre = producto.nombre.toLowerCase();
-    
-    if (nombre.includes('alcohol') || nombre.includes('venda') || nombre.includes('gasa') || nombre.includes('curitas')) {
-      return 'Primeros Auxilios';
-    } else if (nombre.includes('termómetro') || nombre.includes('tensiómetro')) {
-      return 'Equipos Médicos';
-    } else if (nombre.includes('vitamina') || nombre.includes('suplemento') || nombre.includes('complejo b')) {
-      return 'Vitaminas y Suplementos';
-    } else if (nombre.includes('amoxicilina') || nombre.includes('azitromicina') || nombre.includes('antibiótico') || nombre.includes('antibiotico')) {
-      return 'Antibióticos';
-    } else if (nombre.includes('loratadina') || nombre.includes('gripa') || nombre.includes('antigripal') || nombre.includes('alérg') || nombre.includes('alerg')) {
-      return 'Antigripales y Antialérgicos';
-    } else if (
-      nombre.includes('aspirina') ||
-      nombre.includes('ibuprofeno') ||
-      nombre.includes('naproxeno') ||
-      nombre.includes('diclofenaco') ||
-      nombre.includes('dolo')
-    ) {
-      return 'Analgésicos y Antiinflamatorios';
-    } else if (nombre.includes('desitin') || nombre.includes('bebé') || nombre.includes('bebe')) {
-      return 'Cuidado del Bebé';
-    } else if (nombre.includes('jabón') || nombre.includes('jabon') || nombre.includes('protex') || nombre.includes('higiene')) {
-      return 'Cuidado Personal e Higiene';
-    }
-    return 'Medicamentos';
-  }
-
-  /**
-   * Abre formulario para crear un nuevo producto
-   */
-  nuevoProducto() {
-    this.modoEdicion = false;
-    this.resetearFormulario();
+  
+  nuevoProducto(): void {
     this.showModal = true;
-  }
-
-  /**
-   * Resetea el formulario de producto
-   */
-  resetearFormulario() {
+    this.modoEdicion = false;
     this.productoForm = {
       nombre: '',
       descripcion: '',
-      precioVenta: 0,
-      stock: 0
+      codBarras: '',
+      laboratorio: '',
+      precioCompra: 0,
+      precioMenor: 0,
+      precioMayor: 0,
+      stock: 0,
+      stockminimo: 0,
+      fechaVencimiento: '',
+      idCategoria: 0,
+      idUnidadMedida: 0
     };
   }
-
-  /**
-   * Cierra el modal
-   */
-  cerrarModal() {
-    this.showModal = false;
-    this.resetearFormulario();
-  }
-
-  /**
-   * Guarda el producto (crear o editar)
-   */
-  guardarProducto() {
-    // Validación básica
-    if (!this.productoForm.nombre.trim()) {
-      this.cerrarModal();
-      this.mostrarAlerta('El nombre del producto es obligatorio', 'Validación');
-      return;
-    }
-
-    if (this.productoForm.precioVenta <= 0) {
-      this.cerrarModal();
-      this.mostrarAlerta('El precio debe ser mayor a 0', 'Validación');
-      return;
-    }
-
-    if (this.modoEdicion) {
-      // Actualizar producto existente
-      const index = this.productos.findIndex(p => p.idProducto === this.productoForm.idProducto);
-      if (index !== -1) {
-        this.productos[index] = {
-          idProducto: this.productoForm.idProducto,
-          nombre: this.productoForm.nombre,
-          descripcion: this.productoForm.descripcion,
-          stock: this.productoForm.stock,
-          precioVenta: this.productoForm.precioVenta
-        };
-        this.buscarProductos();
-        this.cerrarModal();
-        this.mostrarAlerta(`Producto "${this.productoForm.nombre}" actualizado exitosamente!`, 'Éxito');
-      }
-    } else {
-      // Crear nuevo producto
-      const nuevoId = Math.max(...this.productos.map(p => p.idProducto), 0) + 1;
-      const nuevoProducto: Producto = {
-        idProducto: nuevoId,
-        nombre: this.productoForm.nombre,
-        descripcion: this.productoForm.descripcion,
-        stock: this.productoForm.stock,
-        precioVenta: this.productoForm.precioVenta
-      };
-      
-      this.productos.push(nuevoProducto);
-      this.buscarProductos();
-      this.cerrarModal();
-      this.mostrarAlerta(`Producto "${this.productoForm.nombre}" agregado exitosamente!`, 'Éxito');
-    }
-  }
-
-  /**
-   * Genera un reporte de productos con stock bajo
-   */
-  reporteStockBajo() {
-    this.productosSinStock = this.productos.filter(p => p.stock <= 0);
-    this.productosStockBajo = this.productos.filter(p => p.stock > 0 && p.stock <= 10);
-    
-    this.showReporteModal = true;
-  }
-
-  /**
-   * Cierra el modal de reporte
-   */
-  cerrarReporteModal() {
-    this.showReporteModal = false;
-  }
-
-  /**
-   * Filtra productos con stock bajo desde el reporte
-   */
-  filtrarStockBajo() {
-    this.stockFilter = 'stock-bajo';
-    this.buscarProductos();
-    this.cerrarReporteModal();
-  }
-
-  /**
-   * Abre el formulario para editar un producto existente
-   */
-  editarProducto(producto: Producto) {
+  
+  editarProducto(producto: Producto): void {
+    console.log('✏️ Editando producto:', producto);
+    this.showModal = true;
     this.modoEdicion = true;
+    this.productoEditando = producto;
+    
+    // Extraer IDs de objetos anidados si existen
+    const idCategoria = producto.categoria?.idCategoria || producto.idCategoria || 0;
+    const idUnidadMedida = producto.unidadMedida?.idUnidadMedida || producto.idUnidadMedida || 0;
+    
+    console.log('🔑 IDs extraídos - Categoría:', idCategoria, 'Unidad:', idUnidadMedida);
+    
     this.productoForm = {
-      idProducto: producto.idProducto,
       nombre: producto.nombre,
       descripcion: producto.descripcion,
-      precioVenta: producto.precioVenta,
-      stock: producto.stock
+      codBarras: producto.codBarras,
+      laboratorio: producto.laboratorio,
+      precioCompra: producto.precioCompra,
+      precioMenor: producto.precioMenor,
+      precioMayor: producto.precioMayor,
+      stock: producto.stock,
+      stockminimo: producto.stockminimo,
+      fechaVencimiento: producto.fechaVencimiento,
+      idCategoria: idCategoria,
+      idUnidadMedida: idUnidadMedida
     };
-    this.showModal = true;
+    
+    console.log('📝 Formulario cargado:', this.productoForm);
   }
-
-  /**
-   * Elimina un producto después de confirmar
-   */
-  eliminarProducto(producto: Producto) {
-    if (confirm(`¿Está seguro de eliminar el producto "${producto.nombre}"?`)) {
-      this.productos = this.productos.filter(p => p.idProducto !== producto.idProducto);
-      this.buscarProductos();
-      this.mostrarAlerta(`Producto "${producto.nombre}" eliminado exitosamente!`, 'Éxito');
+  
+  cerrarModal(): void {
+    this.showModal = false;
+    this.productoEditando = null;
+  }
+  
+  guardarProducto(): void {
+    // Validaciones básicas
+    if (!this.productoForm.nombre || !this.productoForm.descripcion) {
+      this.mostrarAlerta('Error', 'Nombre y descripción son obligatorios');
+      return;
+    }
+    
+    if (!this.productoForm.codBarras || this.productoForm.codBarras.trim() === '') {
+      this.mostrarAlerta('Error', 'El código de barras es obligatorio');
+      return;
+    }
+    
+    if (this.productoForm.idCategoria === 0 || this.productoForm.idCategoria === null) {
+      this.mostrarAlerta('Error', 'Debe seleccionar una categoría');
+      return;
+    }
+    
+    if (this.productoForm.idUnidadMedida === 0 || this.productoForm.idUnidadMedida === null) {
+      this.mostrarAlerta('Error', 'Debe seleccionar una unidad de medida');
+      return;
+    }
+    
+    const productoData: Producto = {
+      nombre: this.productoForm.nombre,
+      descripcion: this.productoForm.descripcion,
+      codBarras: this.productoForm.codBarras,
+      laboratorio: this.productoForm.laboratorio,
+      precioCompra: Number(this.productoForm.precioCompra),
+      precioMenor: Number(this.productoForm.precioMenor),
+      precioMayor: Number(this.productoForm.precioMayor),
+      stock: Number(this.productoForm.stock),
+      stockminimo: Number(this.productoForm.stockminimo),
+      fechaVencimiento: this.productoForm.fechaVencimiento,
+      idCategoria: Number(this.productoForm.idCategoria),
+      idUnidadMedida: Number(this.productoForm.idUnidadMedida)
+    };
+    
+    if (this.modoEdicion && this.productoEditando?.idProducto) {
+      // Actualizar producto existente
+      this.productoService.update(this.productoEditando.idProducto, productoData).subscribe({
+        next: (response) => {
+          this.mostrarAlerta('Éxito', 'Producto actualizado correctamente');
+          this.cargarProductos();
+          this.cerrarModal();
+        },
+        error: (err) => {
+          let mensaje = 'No se pudo actualizar el producto.';
+          if (err.error?.message) {
+            mensaje = err.error.message;
+          } else if (err.error) {
+            mensaje = typeof err.error === 'string' ? err.error : JSON.stringify(err.error);
+          }
+          
+          this.mostrarAlerta('Error al Actualizar', mensaje);
+        }
+      });
+    } else {
+      // Crear nuevo producto
+      this.productoService.save(productoData).subscribe({
+        next: (response) => {
+          this.mostrarAlerta('Éxito', 'Producto creado correctamente');
+          this.cargarProductos();
+          this.cerrarModal();
+        },
+        error: (err) => {
+          console.error('✗ Error al crear producto:', err);
+          console.error('Status:', err.status);
+          console.error('Error completo:', JSON.stringify(err, null, 2));
+          
+          let mensaje = 'No se pudo crear el producto.';
+          
+          if (err.status === 403) {
+            mensaje = 'No tienes permisos para crear productos. Inicia sesión nuevamente.';
+          } else if (err.status === 0) {
+            mensaje = 'No se puede conectar con el servidor. Verifica que el backend esté corriendo.';
+          } else if (err.status === 500) {
+            const errorMsg = err.error?.message || '';
+            
+            if (errorMsg.includes('Duplicate entry') && errorMsg.includes('cod_barras')) {
+              // Extraer el código de barras duplicado del mensaje
+              const match = errorMsg.match(/Duplicate entry '([^']+)'/);
+              const codigoDuplicado = match ? match[1] : productoData.codBarras;
+              mensaje = `El código de barras "${codigoDuplicado}" ya existe en otro producto. Por favor usa un código diferente.`;
+            } else if (errorMsg.includes('FK')) {
+              mensaje = 'Error de clave foránea: Verifica que la categoría y unidad de medida existan en la base de datos.';
+            } else {
+              mensaje = `Error del servidor: ${errorMsg || err.statusText}`;
+            }
+          } else if (err.error?.message) {
+            mensaje = err.error.message;
+          }
+          
+          this.mostrarAlerta('Error al Crear Producto', mensaje);
+        }
+      });
     }
   }
-
-  /**
-   * Navegación / placeholder para Categorías
-   */
-  verCategorias() {
+  
+  eliminarProducto(producto: Producto): void {
+    this.confirmModalData = {
+      title: 'Confirmar Eliminación',
+      message: `¿Está seguro de eliminar el producto "${producto.nombre}"?`,
+      onConfirm: () => {
+        if (producto.idProducto) {
+          this.productoService.delete(producto.idProducto).subscribe({
+            next: () => {
+              this.mostrarAlerta('Éxito', 'Producto eliminado correctamente');
+              this.cargarProductos();
+              this.cerrarConfirmModal();
+            },
+            error: (err) => {
+              console.error('Error al eliminar producto:', err);
+              this.mostrarAlerta('Error', 'No se pudo eliminar el producto');
+              this.cerrarConfirmModal();
+            }
+          });
+        }
+      }
+    };
+    this.showConfirmModal = true;
+  }
+  
+  // Búsqueda y filtros
+  buscarProductos(): void {
+    let resultado = [...this.productos];
+    
+    // Filtro por término de búsqueda
+    if (this.searchTerm) {
+      const term = this.searchTerm.toLowerCase();
+      resultado = resultado.filter(p => 
+        p.nombre.toLowerCase().includes(term) ||
+        p.descripcion.toLowerCase().includes(term)
+      );
+    }
+    
+    // Filtro por categoría
+    if (this.categoriaFilter) {
+      resultado = resultado.filter(p => 
+        this.getCategoriaNombre(p) === this.categoriaFilter
+      );
+    }
+    
+    // Filtro por stock
+    if (this.stockFilter === 'sin-stock') {
+      resultado = resultado.filter(p => p.stock === 0);
+    } else if (this.stockFilter === 'stock-bajo') {
+      resultado = resultado.filter(p => p.stock > 0 && p.stock <= p.stockminimo);
+    } else if (this.stockFilter === 'con-stock') {
+      resultado = resultado.filter(p => p.stock > p.stockminimo);
+    }
+    
+    this.productosFiltrados = resultado;
+  }
+  
+  // Reporte de stock
+  reporteStockBajo(): void {
+    this.productosSinStock = this.productos.filter(p => p.stock === 0);
+    this.productosStockBajo = this.productos.filter(p => p.stock > 0 && p.stock <= p.stockminimo);
+    this.showReporteModal = true;
+  }
+  
+  cerrarReporteModal(): void {
+    this.showReporteModal = false;
+  }
+  
+  // Gestión de categorías
+  verCategorias(): void {
     this.mostrarCategorias = true;
     this.mostrarUnidades = false;
     this.pageTitle = 'Categorías';
   }
+  
+  nuevoCategoria(): void {
+    this.showCategoriaModal = true;
+    this.categoriaEditando = null;
+    this.categoriaForm = { nombre: '' };
+  }
+  
+  editarCategoria(cat: any): void {
+    this.showCategoriaModal = true;
+    this.categoriaEditando = cat;
+    this.categoriaForm = { ...cat };
+  }
+  
+  cerrarCategoriaModal(): void {
+    this.showCategoriaModal = false;
+    this.categoriaEditando = null;
+  }
+  
+  guardarCategoria(): void {
+    if (!this.categoriaForm.nombre || !this.categoriaForm.nombre.trim()) {
+      this.mostrarAlerta('Error', 'Debe ingresar un nombre para la categoría');
+      return;
+    }
 
-  /**
-   * Navegación / placeholder para Unidades de Medida
-   */
-  verUnidadesMedida() {
-    this.mostrarCategorias = false;
+    const nuevaCategoria: Categoria = { nombre: this.categoriaForm.nombre.trim() };
+    this.categoriaService.save(nuevaCategoria).subscribe({
+      next: (categoria) => {
+        console.log('✅ Categoría creada en backend:', categoria);
+        this.mostrarAlerta('Éxito', 'Categoría creada correctamente');
+        this.cargarCategorias(); // Recargar lista
+        this.cerrarCategoriaModal();
+      },
+      error: (error) => {
+        console.error('❌ Error al crear categoría:', error);
+        this.mostrarAlerta('Error', 'No se pudo crear la categoría');
+      }
+    });
+  }
+  
+  eliminarCategoria(cat: any): void {
+    this.confirmModalData = {
+      title: 'Confirmar Eliminación',
+      message: `¿Está seguro de eliminar la categoría "${cat.nombre}"?`,
+      onConfirm: () => {
+        if (cat.idCategoria) {
+          this.categoriaService.delete(cat.idCategoria).subscribe({
+            next: () => {
+              this.mostrarAlerta('Éxito', 'Categoría eliminada correctamente');
+              this.cargarCategorias();
+              this.cerrarConfirmModal();
+            },
+            error: (error) => {
+              console.error('❌ Error al eliminar categoría:', error);
+              let mensaje = 'No se pudo eliminar la categoría';
+              if (error.error?.message) {
+                mensaje = error.error.message;
+              } else if (error.status === 500) {
+                mensaje = 'No se puede eliminar la categoría porque tiene productos asociados';
+              }
+              this.mostrarAlerta('Error', mensaje);
+              this.cerrarConfirmModal();
+            }
+          });
+        }
+      }
+    };
+    this.showConfirmModal = true;
+  }
+  
+  // Gestión de unidades de medida
+  verUnidadesMedida(): void {
     this.mostrarUnidades = true;
+    this.mostrarCategorias = false;
     this.pageTitle = 'Unidades de Medida';
   }
+  
+  nuevaUnidad(): void {
+    this.showUnidadModal = true;
+    this.unidadEditando = null;
+    this.unidadForm = { nombre: '', simbolo: '' };
+  }
+  
+  editarUnidad(u: any): void {
+    this.showUnidadModal = true;
+    this.unidadEditando = u;
+    this.unidadForm = { ...u };
+  }
+  
+  cerrarUnidadModal(): void {
+    this.showUnidadModal = false;
+    this.unidadEditando = null;
+  }
+  
+  guardarUnidad(): void {
+    if (!this.unidadForm.nombre || !this.unidadForm.nombre.trim()) {
+      this.mostrarAlerta('Error', 'Debe ingresar un nombre para la unidad de medida');
+      return;
+    }
+    if (!this.unidadForm.simbolo || !this.unidadForm.simbolo.trim()) {
+      this.mostrarAlerta('Error', 'Debe ingresar un símbolo para la unidad de medida');
+      return;
+    }
 
-  /**
-   * Regresar a la vista principal de productos
-   */
-  verProductos() {
+    const nuevaUnidad: UnidadMedida = { 
+      nombre: this.unidadForm.nombre.trim(), 
+      simbolo: this.unidadForm.simbolo.trim().toUpperCase() 
+    };
+    this.unidadMedidaService.save(nuevaUnidad).subscribe({
+      next: (unidad) => {
+        console.log('✅ Unidad de medida creada en backend:', unidad);
+        this.mostrarAlerta('Éxito', 'Unidad de medida creada correctamente');
+        this.cargarUnidades(); // Recargar lista
+        this.cerrarUnidadModal();
+      },
+      error: (error) => {
+        console.error('❌ Error al crear unidad de medida:', error);
+        this.mostrarAlerta('Error', 'No se pudo crear la unidad de medida');
+      }
+    });
+  }
+  
+  eliminarUnidad(u: any): void {
+    this.confirmModalData = {
+      title: 'Confirmar Eliminación',
+      message: `¿Está seguro de eliminar la unidad de medida "${u.nombre}" (${u.simbolo})?`,
+      onConfirm: () => {
+        if (u.idUnidadMedida) {
+          this.unidadMedidaService.delete(u.idUnidadMedida).subscribe({
+            next: () => {
+              this.mostrarAlerta('Éxito', 'Unidad de medida eliminada correctamente');
+              this.cargarUnidades();
+              this.cerrarConfirmModal();
+            },
+            error: (error) => {
+              console.error('❌ Error al eliminar unidad de medida:', error);
+              let mensaje = 'No se pudo eliminar la unidad de medida';
+              if (error.error?.message) {
+                mensaje = error.error.message;
+              } else if (error.status === 500) {
+                mensaje = 'No se puede eliminar la unidad de medida porque tiene productos asociados';
+              }
+              this.mostrarAlerta('Error', mensaje);
+              this.cerrarConfirmModal();
+            }
+          });
+        }
+      }
+    };
+    this.showConfirmModal = true;
+  }
+  
+  verProductos(): void {
     this.mostrarCategorias = false;
     this.mostrarUnidades = false;
-    this.pageTitle = 'Listado de Productos';
-    this.showReporteModal = false;
-    this.searchTerm = '';
-    this.stockFilter = '';
-    this.buscarProductos();
+    this.pageTitle = 'Productos';
   }
-
-  /**
-   * Datos de categorías para clasificación y gestión
-   */
-  categoriasGestion: Array<{ nombre: string }> = [
-    { nombre: 'Analgésicos y Antiinflamatorios' },
-    { nombre: 'Antibióticos' },
-    { nombre: 'Antigripales y Antialérgicos' },
-    { nombre: 'Vitaminas y Suplementos' },
-    { nombre: 'Cuidado Gástrico' },
-    { nombre: 'Cuidado Personal e Higiene' },
-    { nombre: 'Primeros Auxilios' },
-    { nombre: 'Cuidado del Bebé' },
-    { nombre: 'Equipos Médicos' },
-    { nombre: 'Cosméticos y Belleza' },
-  ];
-
-  editarCategoria(cat: { nombre: string }) {
-    this.modoEdicionCategoria = true;
-    this.categoriaForm = { 
-      nombre: cat.nombre,
-      categoriaOriginal: cat
-    };
-    this.showCategoriaModal = true;
-  }
-
-  eliminarCategoria(cat: { nombre: string }) {
-    if (confirm(`¿Eliminar la categoría "${cat.nombre}"?`)) {
-      this.categoriasGestion = this.categoriasGestion.filter(c => c !== cat);
-      this.mostrarAlerta('Categoría eliminada', 'Éxito');
+  
+  // Utilidades
+  getCategoriaNombre(producto: Producto): string {
+    // Primero intentar obtener el nombre del objeto anidado
+    if (producto.categoria?.nombre) {
+      return producto.categoria.nombre;
     }
+    // Si no existe, buscar en el array local
+    const cat = this.categoriasGestion.find(c => c.idCategoria === producto.idCategoria);
+    return cat ? cat.nombre : 'Sin categoría';
   }
-
-  /**
-   * Crear nueva categoría
-   */
-  nuevoCategoria() {
-    this.modoEdicionCategoria = false;
-    this.categoriaForm = { nombre: '' };
-    this.showCategoriaModal = true;
+  
+  getStockClass(stock: number, stockminimo: number): string {
+    if (stock === 0) return 'stock-cero';
+    if (stock <= stockminimo) return 'stock-bajo';
+    return 'stock-ok';
   }
-
-  /**
-   * Guarda la categoría (crear o editar)
-   */
-  guardarCategoria() {
-    const nombreLimpio = this.categoriaForm.nombre.trim();
-    
-    if (!nombreLimpio) {
-      this.cerrarCategoriaModal();
-      this.mostrarAlerta('El nombre de la categoría es obligatorio', 'Validación');
-      return;
-    }
-
-    if (this.modoEdicionCategoria) {
-      // Editar categoría existente
-      const idx = this.categoriasGestion.indexOf(this.categoriaForm.categoriaOriginal);
-      if (idx > -1) {
-        this.categoriasGestion[idx] = { ...this.categoriaForm.categoriaOriginal, nombre: nombreLimpio };
-        this.categoriasGestion = [...this.categoriasGestion];
-        this.cerrarCategoriaModal();
-        this.mostrarAlerta('Categoría actualizada exitosamente', 'Éxito');
-      }
-    } else {
-      // Nueva categoría
-      this.categoriasGestion.push({ nombre: nombreLimpio });
-      this.cerrarCategoriaModal();
-      this.mostrarAlerta('Categoría agregada exitosamente', 'Éxito');
-    }
+  
+  mostrarAlerta(title: string, message: string): void {
+    this.alertTitle = title;
+    this.alertMessage = message;
+    this.showAlertModal = true;
   }
-
-  /**
-   * Cierra el modal de categoría
-   */
-  cerrarCategoriaModal() {
-    this.showCategoriaModal = false;
-    this.categoriaForm = { nombre: '' };
-    this.modoEdicionCategoria = false;
+  
+  cerrarAlerta(): void {
+    this.showAlertModal = false;
   }
-
-  /**
-   * Datos de unidades de medida (Nombre y Símbolo)
-   */
-  unidadesGestion: Array<{ nombre: string; simbolo: string }> = [
-    { nombre: 'Unidad', simbolo: 'UND' },
-    { nombre: 'Caja', simbolo: 'CAJA' },
-    { nombre: 'Frasco', simbolo: 'FRASCO' },
-    { nombre: 'Tubo', simbolo: 'TUBO' },
-    { nombre: 'Paquete', simbolo: 'PAQ' },
-    { nombre: 'Tabletas', simbolo: 'TB' },
-  ];
-
-  editarUnidad(u: { nombre: string; simbolo: string }) {
-    this.modoEdicionUnidad = true;
-    this.unidadForm = {
-      nombre: u.nombre,
-      simbolo: u.simbolo,
-      unidadOriginal: u
-    };
-    this.showUnidadModal = true;
-  }
-
-  eliminarUnidad(u: { nombre: string; simbolo: string }) {
-    if (confirm(`¿Eliminar la unidad "${u.nombre}"?`)) {
-      this.unidadesGestion = this.unidadesGestion.filter(x => x !== u);
-      this.mostrarAlerta('Unidad eliminada', 'Éxito');
-    }
-  }
-
-  nuevaUnidad() {
-    this.modoEdicionUnidad = false;
-    this.unidadForm = { nombre: '', simbolo: '' };
-    this.showUnidadModal = true;
-  }
-
-  /**
-   * Guarda la unidad (crear o editar)
-   */
-  guardarUnidad() {
-    const nombreLimpio = this.unidadForm.nombre.trim();
-    const simboloLimpio = this.unidadForm.simbolo.trim().toUpperCase();
-
-    if (!nombreLimpio) {
-      this.cerrarUnidadModal();
-      this.mostrarAlerta('El nombre de la unidad es obligatorio', 'Validación');
-      return;
-    }
-
-    if (!simboloLimpio) {
-      this.cerrarUnidadModal();
-      this.mostrarAlerta('El símbolo de la unidad es obligatorio', 'Validación');
-      return;
-    }
-
-    if (this.modoEdicionUnidad) {
-      // Editar unidad existente
-      const idx = this.unidadesGestion.indexOf(this.unidadForm.unidadOriginal);
-      if (idx > -1) {
-        this.unidadesGestion[idx] = { nombre: nombreLimpio, simbolo: simboloLimpio };
-        this.unidadesGestion = [...this.unidadesGestion];
-        this.cerrarUnidadModal();
-        this.mostrarAlerta('Unidad actualizada exitosamente', 'Éxito');
-      }
-    } else {
-      // Nueva unidad
-      this.unidadesGestion.push({ nombre: nombreLimpio, simbolo: simboloLimpio });
-      this.cerrarUnidadModal();
-      this.mostrarAlerta('Unidad agregada exitosamente', 'Éxito');
-    }
-  }
-
-  /**
-   * Cierra el modal de unidad
-   */
-  cerrarUnidadModal() {
-    this.showUnidadModal = false;
-    this.unidadForm = { nombre: '', simbolo: '' };
-    this.modoEdicionUnidad = false;
+  
+  cerrarConfirmModal(): void {
+    this.showConfirmModal = false;
   }
 }
