@@ -5,7 +5,7 @@
       <p class="welcome-text">GESTIÓN DE</p>
       <h1 class="page-title-main">{{ pageTitle }}</h1>
     </div>
-    <div class="header-actions-main">
+    <div class="header-actions-main" *ngIf="userRole !== 'VENDEDOR' && userRole !== 'vendedor'">
       <button class="btn-reporte-stock" (click)="reporteStockBajo()">
         <span class="material-icons">warning</span> Reporte Stock Bajo
       </button>
@@ -78,7 +78,7 @@
           <th>Categoría</th>
           <th>Stock</th>
           <th>Precio</th>
-          <th>Acciones</th>
+          <th *ngIf="userRole !== 'VENDEDOR' && userRole !== 'vendedor'">Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -89,7 +89,7 @@
             {{ producto.stock.toFixed(2) }}
           </td>
           <td class="producto-precio" data-label="Precio">S/. {{ producto.precioMayor.toFixed(2) }}</td>
-          <td class="producto-acciones" data-label="Acciones">
+          <td class="producto-acciones" data-label="Acciones" *ngIf="userRole !== 'VENDEDOR' && userRole !== 'vendedor'">
             <button class="btn-accion btn-editar" (click)="editarProducto(producto)" title="Editar">
               <mat-icon>edit</mat-icon>
             </button>

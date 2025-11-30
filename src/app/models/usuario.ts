@@ -14,4 +14,7 @@ export interface Usuario {
   respSeguridad: string;
   idRol: number;
   rol?: Rol;
+  fechaCreacion?: string; // ISO date string
+  fechaEliminacion?: string; // ISO date string
+  fechaCambioEstado?: string; // ISO date string
 }

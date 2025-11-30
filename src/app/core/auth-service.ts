@@ -42,8 +42,6 @@ export class AuthService {
     this.router.navigate(['/login']); // Redirige al login
   }
 
-  // --- Métodos de Ayuda (Helpers) para el Token ---
-
   /**
    * Guarda el token en sessionStorage
    */

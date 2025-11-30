@@ -2,7 +2,10 @@
   <!-- Header -->
   <div class="dashboard-header">
     <div class="header-text">
-      <h1 class="page-title">Admin</h1>
+      <h1 class="page-title">
+        {{ userName }}
+        <span *ngIf="userRole === 'VENDEDOR' || userRole === 'vendedor'"> - Vendedor</span>
+      </h1>
     </div>
     <button class="btn-nuevo-producto" (click)="irAProductos()">
       <span class="material-icons">visibility</span> Ver Productos

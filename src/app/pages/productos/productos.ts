@@ -6,6 +6,8 @@ import { Producto } from '../../models/producto';
 import { ProductoService } from '../../services/producto.service';
 import { CategoriaService, Categoria } from '../../services/categoria.service';
 import { UnidadMedidaService, UnidadMedida } from '../../services/unidad-medida.service';
+import { AuthService } from '../../core/auth-service';
+import { getRoleFromToken } from '../../core/jwt-helper';
 
 @Component({
   selector: 'app-productos',
@@ -81,13 +83,23 @@ export class ProductosComponent implements OnInit {
     onConfirm: () => {}
   };
   
+
+  public userRole: string | null = null;
+
   constructor(
     private productoService: ProductoService,
     private categoriaService: CategoriaService,
-    private unidadMedidaService: UnidadMedidaService
-  ) {}
+    private unidadMedidaService: UnidadMedidaService,
+    private authService: AuthService
+  ) {
+    const token = this.authService.getToken();
+    this.userRole = getRoleFromToken(token || '');
+  }
   
   ngOnInit(): void {
+    // Actualiza el rol del usuario al iniciar el componente
+    const token = this.authService.getToken();
+    this.userRole = getRoleFromToken(token || '');
     this.cargarProductos();
     this.cargarCategorias();
     this.cargarUnidades();

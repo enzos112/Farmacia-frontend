@@ -1,1 +1,331 @@
-<p>usuarios works!</p>
+<div class="usuarios-container">
+	<div *ngIf="accesoDenegado" class="acceso-denegado">
+		<h2>Acceso denegado</h2>
+		<p>No tienes permiso para ver esta página.</p>
+	</div>
+	<ng-container *ngIf="!accesoDenegado">
+	<div class="usuarios-header" style="margin-bottom:32px;">
+			<div class="header-titles">
+				<p class="welcome-text" style="font-size:14px; color:#6c757d; margin:0; font-weight:500;">GESTIÓN DE</p>
+				<h1 class="page-title" style="font-size:32px; color:#2c3e50; margin:0; font-weight:700; background:none;">Usuarios</h1>
+			</div>
+			<button class="btn-nuevo-cliente" *ngIf="!userRole || userRole.toLowerCase() !== 'vendedor'" (click)="abrirModalNuevoUsuario()" style="background-color:#303F9F; color:white; border:none; padding:12px 24px; border-radius:8px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:8px; box-shadow:0 4px 6px rgba(48,63,159,0.2);">
+				<span class="material-icons" style="font-size:20px;">add</span>
+				<span style="font-size:13px; font-weight:700;">Nuevo Usuario</span>
+			</button>
+	</div>
+
+	<!-- Modal de Éxito -->
+	<div class="alert-overlay" *ngIf="mostrarModalExito" (click)="cerrarModalExito()">
+		<div class="modal-content modal-alert" (click)="$event.stopPropagation()">
+			<div class="modal-header">
+				<h2>¡Éxito!</h2>
+			</div>
+			<div class="modal-body">
+				<p class="alert-message mensaje-exito-16">{{mensajeExito}}</p>
+			</div>
+			<div class="modal-footer">
+				<button class="btn-primary" (click)="cerrarModalExito()">Aceptar</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal Nuevo/Editar Usuario -->
+	<div class="modal-overlay" *ngIf="mostrarModalNuevoUsuario">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2>{{ modoEdicion ? 'Editar Usuario' : 'Nuevo Usuario' }}</h2>
+				<button class="btn-cerrar" (click)="cerrarModalNuevoUsuario()">&times;</button>
+			</div>
+			<form class="modal-body usuario-form" (ngSubmit)="guardarUsuario()" autocomplete="off">
+				<div class="form-row">
+					<div class="form-group">
+						<label>DNI *</label>
+						<input type="text" class="form-input" maxlength="8" [(ngModel)]="usuarioForm.dni" name="dni" placeholder="12345678" required>
+					</div>
+					<div class="form-group">
+						<label>Celular *</label>
+						<input type="text" class="form-input" maxlength="9" [(ngModel)]="usuarioForm.celular" name="celular" placeholder="987654321" required>
+					</div>
+				</div>
+				<div class="form-row">
+					<div class="form-group">
+						<label>Nombre *</label>
+						<input type="text" class="form-input" [(ngModel)]="usuarioForm.nombre" name="nombre" placeholder="Ingrese el nombre" required>
+					</div>
+					<div class="form-group">
+						<label>Apellido *</label>
+						<input type="text" class="form-input" [(ngModel)]="usuarioForm.apellido" name="apellido" placeholder="Ingrese el apellido" required>
+					</div>
+				</div>
+				<div class="form-row">
+					<div class="form-group">
+						<label>Nombre de usuario *</label>
+						<input type="text" class="form-input" [(ngModel)]="usuarioForm.login" name="login" placeholder="Nombre de usuario" required [readonly]="modoEdicion">
+					</div>
+					<div class="form-group">
+						<label>Contraseña *</label>
+						<input type="password" class="form-input" [(ngModel)]="usuarioForm.password" name="password" placeholder="********" [required]="!modoEdicion">
+					</div>
+				</div>
+				<div class="form-row">
+					<div class="form-group">
+						<label>Dirección *</label>
+						<input type="text" class="form-input" [(ngModel)]="usuarioForm.direccion" name="direccion" placeholder="Av. Principal 123" required>
+					</div>
+					<div class="form-group">
+						<label>Rol *</label>
+						<select class="form-input" [(ngModel)]="usuarioForm.idRol" name="idRol" required>
+							<option [ngValue]="1">Administrador</option>
+						</select>
+					</div>
+				</div>
+				<div class="form-row">
+					<div class="form-group">
+						<label>Pregunta de Seguridad *</label>
+						<input type="text" class="form-input" [(ngModel)]="usuarioForm.pregSeguridad" name="pregSeguridad" placeholder="¿Tu mascota favorita?" required>
+					</div>
+					<div class="form-group">
+						<label>Respuesta de Seguridad *</label>
+						<input type="text" class="form-input" [(ngModel)]="usuarioForm.respSeguridad" name="respSeguridad" placeholder="Respuesta" required>
+					</div>
+				</div>
+				<div *ngIf="mensajeError" style="color:#d32f2f; margin-bottom:10px; text-align:center; font-weight:600;">{{mensajeError}}</div>
+				<div class="form-actions">
+					<button type="submit" class="btn-guardar">{{ modoEdicion ? 'Guardar Cambios' : 'Guardar' }}</button>
+					<button type="button" class="btn-cancelar" (click)="cerrarModalNuevoUsuario()">Cancelar</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<!-- Modal de Confirmación de Eliminar/Desactivar/Activar -->
+	<div class="modal-overlay" *ngIf="mostrarModalConfirmar">
+		<div class="modal-content modal-alert" (click)="$event.stopPropagation()">
+			<div class="modal-header">
+				<h2>Confirmar {{ usuarioAEliminar?.estado === 'activo' ? 'Desactivación' : 'Activación' }}</h2>
+				<button class="btn-close" (click)="cerrarModalConfirmar()">&times;</button>
+			</div>
+			<div class="modal-body">
+				<p class="alert-message">
+					¿Está seguro que desea {{ usuarioAEliminar?.estado === 'activo' ? 'desactivar' : 'activar' }} al usuario <b>{{ usuarioAEliminar?.nombre }} {{ usuarioAEliminar?.apellido }}</b>?
+				</p>
+				<div class="form-group" style="margin-top:18px;">
+					<label>Contraseña *</label>
+					<input type="password" class="form-input" [(ngModel)]="passwordConfirm" name="passwordConfirm" placeholder="Ingrese la contraseña actual" required>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button class="btn-primary" (click)="confirmarCambioEstado()" [disabled]="!passwordConfirm">Sí, {{ usuarioAEliminar?.estado === 'activo' ? 'Desactivar' : 'Activar' }}</button>
+				<button class="btn-primary" (click)="cerrarModalConfirmar()">Cancelar</button>
+			</div>
+		</div>
+	</div>
+
+				<!-- Bloque de contadores generales -->
+				<div class="card estadisticas-usuarios" style="margin-bottom:40px;">
+					<h3>RESUMEN GENERAL</h3>
+					<div class="stats-grid">
+						<div class="stat-item">
+							<div class="stat-icon blue"><span class="material-icons">fact_check</span></div>
+							<div class="stat-info">
+								<div class="stat-valor">{{ totalUsuarios }}</div>
+								<div class="stat-label">Total Usuarios</div>
+							</div>
+						</div>
+						<div class="stat-item">
+							<div class="stat-icon green"><span class="material-icons">supervisor_account</span></div>
+							<div class="stat-info">
+								<div class="stat-valor">{{ totalAdministradores }}</div>
+								<div class="stat-label">Administradores</div>
+							</div>
+						</div>
+						<div class="stat-item">
+							<div class="stat-icon orange"><span class="material-icons">person_add</span></div>
+							<div class="stat-info">
+								<div class="stat-valor">{{ totalUsuariosCreados }}</div>
+								<div class="stat-label">Usuarios Creados</div>
+							</div>
+						</div>
+						<div class="stat-item">
+							<div class="stat-icon purple"><span class="material-icons">delete</span></div>
+							<div class="stat-info">
+								<div class="stat-valor">{{ totalUsuariosEliminados }}</div>
+								<div class="stat-label">Usuarios Eliminados</div>
+							</div>
+						</div>
+							<div class="stat-item">
+								<div class="stat-icon blue"><span class="material-icons">swap_horiz</span></div>
+								<div class="stat-info">
+									<div class="stat-valor">{{ totalUsuariosEstado }}</div>
+									<div class="stat-label">Usuarios Cambiados</div>
+								</div>
+							</div>
+					</div>
+				</div>
+		<!-- Cuadro de lista de usuarios -->
+			<div style="background:#fff; border-radius:24px; box-shadow:0 2px 16px #0001; padding:32px 40px; margin-bottom:24px; margin-top:24px; display:flex; flex-direction:column; min-width:600px;">
+				<div class="lista-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:20px;">
+					<h3 style="font-size:18px; color:#6c757d; margin:0; font-weight:700;">LISTA DE USUARIOS</h3>
+					<div class="controles-lista" style="display:flex; gap:20px; align-items:center; width:100%;">
+						<div class="search-wrapper" style="position:relative; display:flex; align-items:center; flex:1;">
+							<span class="material-icons" style="position:absolute; left:12px; color:#90a4ae; font-size:20px;">search</span>
+							<input type="text" placeholder="Buscar por nombre, DNI, usuario, celular..." [(ngModel)]="searchTerm" (input)="buscarUsuarios()" style="padding:10px 16px 10px 40px; border:1px solid #cfd8dc; border-radius:8px; outline:none; font-size:14px; width:100%; transition:border-color 0.2s; box-sizing:border-box;">
+						</div>
+						<div class="quick-filters" style="display:flex; gap:8px; flex-wrap:wrap;">
+							<button class="filter-chip" (click)="filtrarPorRol('todos')"
+								style="border:none; padding:6px 16px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; margin-right:8px;"
+								[style.background]="filtroRol==='todos' ? '#303F9F' : '#f1f3f4'"
+								[style.color]="filtroRol==='todos' ? '#fff' : '#6c757d'"
+							>Todos</button>
+							<button class="filter-chip" (click)="filtrarPorRol('admin')"
+								style="border:none; padding:6px 16px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; margin-right:8px;"
+								[style.background]="filtroRol==='admin' ? '#303F9F' : '#f1f3f4'"
+								[style.color]="filtroRol==='admin' ? '#fff' : '#6c757d'"
+							>Administradores</button>
+							<button class="filter-chip" (click)="filtrarPorRol('supervisor')"
+								style="border:none; padding:6px 16px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; margin-right:8px;"
+								[style.background]="filtroRol==='supervisor' ? '#303F9F' : '#f1f3f4'"
+								[style.color]="filtroRol==='supervisor' ? '#fff' : '#6c757d'"
+							>Supervisores</button>
+							<button class="filter-chip" (click)="filtrarPorRol('vendedor')"
+								style="border:none; padding:6px 16px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; margin-right:8px;"
+								[style.background]="filtroRol==='vendedor' ? '#303F9F' : '#f1f3f4'"
+								[style.color]="filtroRol==='vendedor' ? '#fff' : '#6c757d'"
+							>Vendedores</button>
+							<button class="filter-chip" (click)="filtrarPorRol('cliente')"
+								style="border:none; padding:6px 16px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; margin-right:8px;"
+								[style.background]="filtroRol==='cliente' ? '#303F9F' : '#f1f3f4'"
+								[style.color]="filtroRol==='cliente' ? '#fff' : '#6c757d'"
+							>Clientes</button>
+						</div>
+					</div>
+				</div>
+			<table class="usuarios-table">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>DNI</th>
+						<th>NOMBRE COMPLETO</th>
+						<th>USUARIO</th>
+						<th>CELULAR</th>
+						<th>ROL</th>
+						<th>ESTADO</th>
+						<th>ACCIONES</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr *ngIf="usuarios.length === 0" class="usuarios-empty-row">
+						<td colspan="8"><span class="usuarios-empty-msg">No se encontraron usuarios</span></td>
+					</tr>
+					<tr *ngFor="let u of usuariosFiltrados">
+						<td>{{u.idUsuario}}</td>
+						<td>{{u.dni}}</td>
+						<td>{{u.nombre}} {{u.apellido}}</td>
+						<td>{{u.login}}</td>
+						<td>{{u.celular}}</td>
+						<td>
+							{{ u.rol?.nombre || getNombreRol(u.idRol) }}
+						</td>
+						<!-- Estado en la tabla, solo texto -->
+						<td>
+							<span [ngClass]="{'estado-badge': true, 'estado-activo': u.estado === 'activo', 'estado-inactivo': u.estado === 'inactivo'}">
+								{{ u.estado === 'activo' ? 'ACTIVO' : 'INACTIVO' }}
+							</span>
+						</td>
+						<td class="usuario-acciones">
+						<td class="usuario-acciones" style="display:flex; justify-content:center; align-items:center; gap:18px;">
+							<button class="btn-accion btn-editar" (click)="editarUsuario(u)" title="Editar">
+								<span class="material-icons">edit</span>
+							</button>
+							<label class="switch-toggle" [class.switch-activo]="u.estado === 'activo'" [class.switch-inactivo]="u.estado === 'inactivo'">
+								<input type="checkbox" [checked]="u.estado === 'activo'" (change)="cambiarEstadoUsuario(u)" style="display:none;">
+								<span class="slider"></span>
+							</label>
+							<button class="btn-accion btn-eliminar"
+								(click)="abrirModalEliminar(u)"
+								title="Eliminar">
+								<span class="material-icons">delete</span>
+							</button>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+
+	<!-- Cuadro de estado de usuarios debajo de la tabla -->
+	<div style="display:flex; gap:40px; margin-top:40px;">
+		<div class="estado-usuarios-card" style="background:#fff; border-radius:16px; padding:32px 40px; min-width:420px; box-shadow:0 2px 16px #0001; margin-right:20px;">
+			<div style="font-size:1.1em; font-weight:bold; color:#2836c7; margin-bottom:20px;">ESTADO DE USUARIOS</div>
+			<div style="display:flex; gap:24px;">
+				<div style="flex:1; background:#f8f9fa; border-radius:10px; padding:18px 0; display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:160px;">
+					<div style="font-size:1.1em; font-weight:600; color:#222; margin-bottom:8px;">Activos</div>
+					<div *ngIf="totalActivos > 0" style="font-size:2em; color:green; font-weight:bold;">{{ totalActivos }}</div>
+					<div *ngIf="totalActivos === 0" style="color:#b0b6c3; display:flex; flex-direction:column; align-items:center;">
+						<span class="material-icons" style="font-size:38px;">person</span>
+						<span>Sin usuarios activos</span>
+					</div>
+				</div>
+				<div style="flex:1; background:#f8f9fa; border-radius:10px; padding:18px 0; display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:160px;">
+					<div style="font-size:1.1em; font-weight:600; color:#222; margin-bottom:8px;">Inactivos</div>
+					<div *ngIf="totalInactivos > 0" style="font-size:2em; color:red; font-weight:bold;">{{ totalInactivos }}</div>
+					<div *ngIf="totalInactivos === 0" style="color:#b0b6c3; display:flex; flex-direction:column; align-items:center;">
+						<span class="material-icons" style="font-size:38px;">person_off</span>
+						<span>Sin usuarios inactivos</span>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="actividad-dia-card" style="background:#fff; border-radius:12px; padding:24px 32px; min-width:420px; box-shadow:0 2px 12px #0001; margin-left:20px;">
+			<div style="font-size:1.1em; font-weight:bold; color:#2836c7; margin-bottom:16px;">ACTIVIDAD DEL DÍA</div>
+			<div style="display:flex; gap:24px;">
+				<div style="flex:1; background:#f8f9fa; border-radius:10px; padding:18px 0; display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:160px;">
+					<div style="font-size:1.1em; font-weight:600; color:#222; margin-bottom:8px;">Usuarios creados hoy</div>
+					<div *ngIf="usuariosCreadosHoy > 0" style="font-size:2em; color:#2836c7; font-weight:bold;">{{ usuariosCreadosHoy }}</div>
+					<div *ngIf="usuariosCreadosHoy === 0" style="color:#b0b6c3; display:flex; flex-direction:column; align-items:center;">
+						<span class="material-icons" style="font-size:38px;">person_add</span>
+						<span>Sin movimientos hoy</span>
+					</div>
+				</div>
+						<div style="flex:1; background:#f8f9fa; border-radius:10px; padding:18px 0; display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:160px;">
+							<div style="font-size:1.1em; font-weight:600; color:#222; margin-bottom:8px;">Usuarios eliminados hoy</div>
+							<ng-container *ngIf="usuariosEliminadosHoy > 0; else sinEliminados">
+								<div style="font-size:2em; color:#2836c7; font-weight:bold;">{{ usuariosEliminadosHoy }}</div>
+							</ng-container>
+							<ng-template #sinEliminados>
+								<span class="material-icons" style="font-size:38px; color:#b0b6c3;">delete</span>
+								<span style="color:#b0b6c3;">Sin movimientos hoy</span>
+							</ng-template>
+						</div>
+						<div style="flex:1; background:#f8f9fa; border-radius:10px; padding:18px 0; display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:160px;">
+							<div style="font-size:1.1em; font-weight:600; color:#222; margin-bottom:8px;">Usuarios cambiados de estado hoy</div>
+							<ng-container *ngIf="usuariosEstadoHoy > 0; else sinEstado">
+								<div style="font-size:2em; color:#2836c7; font-weight:bold;">{{ usuariosEstadoHoy }}</div>
+							</ng-container>
+							<ng-template #sinEstado>
+								<span class="material-icons" style="font-size:38px; color:#b0b6c3;">swap_horiz</span>
+								<span style="color:#b0b6c3;">Sin movimientos hoy</span>
+							</ng-template>
+						</div>
+			</div>
+		</div>
+	</div>
+</ng-container>
+</div>
+
+<!-- Modal de confirmación de eliminación local -->
+<div class="modal-overlay" *ngIf="mostrarModalEliminar">
+	<div class="modal-content modal-alert" (click)="$event.stopPropagation()">
+		<div class="modal-header">
+			<h2>Confirmar Eliminación</h2>
+		</div>
+		<div class="modal-body">
+			<p class="alert-message confirm-eliminar-grande">¿Está seguro que desea eliminar al usuario <b>{{ usuarioAEliminarLocal?.nombre }} {{ usuarioAEliminarLocal?.apellido }}</b>?</p>
+		</div>
+		<div class="modal-footer">
+			<button class="btn-primary" (click)="confirmarEliminarUsuario()">Sí, eliminar</button>
+			<button class="btn-cancelar" (click)="cerrarModalEliminar()">Cancelar</button>
+		</div>
+	</div>
+</div>

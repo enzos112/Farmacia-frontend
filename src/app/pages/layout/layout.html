@@ -33,7 +33,7 @@
       <span class="app-toolbar-title">Sistema de Gestión de Farmacia</span>
       <span class="app-spacer"></span>
       <div class="user-info">
-        <span>Admin User</span> <button mat-icon-button [matMenuTriggerFor]="userMenu">
+        <span>{{ userName }}</span> <button mat-icon-button [matMenuTriggerFor]="userMenu">
           <mat-icon>account_circle</mat-icon>
         </button>
         <mat-menu #userMenu="matMenu">

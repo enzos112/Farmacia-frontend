@@ -1,4 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+import { AuthService } from '../../core/auth-service';
+import { getRoleFromToken } from '../../core/jwt-helper';
+import { getUserNameFromToken } from '../../core/jwt-user-helper';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -17,8 +20,18 @@ import { ProductoService } from '../../services/producto.service';
   styleUrls: ['./dashboard.css']
 })
 export class DashboardComponent implements OnInit {
-  
-  constructor(private router: Router, private ventaService: VentaService, private productoService: ProductoService) {}
+  public userRole: string | null = null;
+  public userName: string | null = null;
+  constructor(
+    private router: Router,
+    private ventaService: VentaService,
+    private productoService: ProductoService,
+    private authService: AuthService
+  ) {
+    const token = this.authService.getToken();
+    this.userRole = getRoleFromToken(token || '');
+    this.userName = getUserNameFromToken(token || '');
+  }
   
   // Datos del reporte del día
   ventasDelDia: number = 0;
@@ -174,8 +187,10 @@ export class DashboardComponent implements OnInit {
         this.numeroVentasDelDia = stats.ventasHoy; // conteo de ventas del día
       },
       error: () => {
-        // Fallback a simulación si el servicio falla
-        this.cargarDatosMes();
+        // Si falla, dejar los valores en cero
+        this.ventasDelDia = 0;
+        this.totalMesActual = 0;
+        this.numeroVentasDelDia = 0;
       }
     });
 
@@ -209,8 +224,9 @@ export class DashboardComponent implements OnInit {
         this.actualizarInventoryChart();
       },
       error: () => {
-        // fallback: mantener datos simulados
-        this.actualizarTopProductos();
+        // Si falla, dejar los valores en vacío
+        this.topProductos = [];
+        this.maxVentasTop = 0;
         this.actualizarInventoryChart();
       }
     });
@@ -297,8 +313,6 @@ export class DashboardComponent implements OnInit {
     
     // Recalcular ventas del día y total del mes según selección
     this.cargarDatosMes();
-    // Actualizar top productos según el mes seleccionado
-    this.actualizarTopProductos();
     // Recargar datos de productos por si cambiaron
     this.cargarDatosProductos();
   }
@@ -315,21 +329,7 @@ export class DashboardComponent implements OnInit {
       this.router.navigate(['/pages/productos']);
   }
 
-  // Método para simular top productos; cuando haya backend se reemplaza con llamada HTTP
-  actualizarTopProductos() {
-    const base = this.mesSeleccionado || this.mesActual;
-    // Generar valores distintos según el mes para que cambie
-    const factor = this.mesesDelAnio.indexOf(base) + 1; // 1..12
-    const simulados = [
-      { nombre: 'Paracetamol 500mg', ventas: 120 * factor },
-      { nombre: 'Ibuprofeno 400mg', ventas: 95 * factor },
-      { nombre: 'Vitamina C 1g', ventas: 80 * factor },
-      { nombre: 'Omeprazol 20mg', ventas: 70 * factor },
-      { nombre: 'Amoxicilina 500mg', ventas: 55 * factor }
-    ];
-    this.topProductos = simulados;
-    this.maxVentasTop = Math.max(...simulados.map(s => s.ventas));
-  }
+  // Eliminar método de simulación de top productos (ya no se usa)
 
   // Conectar Reporte del día con Mes actual
   private cargarDatosMes() {
