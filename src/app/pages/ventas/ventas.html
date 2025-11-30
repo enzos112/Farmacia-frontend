@@ -22,6 +22,7 @@
             <div class="stat-label">Total Histórico</div>
           </div>
         </div>
+
         <div class="stat-item">
           <div class="stat-icon green"><mat-icon>today</mat-icon></div>
           <div class="stat-info">
@@ -29,6 +30,7 @@
             <div class="stat-label">Ventas Hoy</div>
           </div>
         </div>
+
         <div class="stat-item">
           <div class="stat-icon orange"><mat-icon>calendar_view_month</mat-icon></div>
           <div class="stat-info">
@@ -36,6 +38,7 @@
             <div class="stat-label">Ventas Mes</div>
           </div>
         </div>
+
         <div class="stat-item">
           <div class="stat-icon purple"><mat-icon>attach_money</mat-icon></div>
           <div class="stat-info">
@@ -48,7 +51,7 @@
 
     <div class="card table-section">
       <div class="lista-header">
-        <h3>HISTORIAL DE TRANSACCIONES</h3>
+        <h3>ÚLTIMAS TRANSACCIONES</h3>
         <div class="controles-lista">
           <div class="search-wrapper">
             <mat-icon>search</mat-icon>
@@ -79,25 +82,41 @@
           <tbody>
             <tr *ngFor="let venta of ventasFiltradas">
               <td>
-                <span class="badge-numero">{{ venta.numComprobante }}</span>
+                <span class="badge-numero">{{ venta.numComprobante || 'V-' + venta.idVenta }}</span>
                 <div class="vendedor-subtext">{{ venta.usuario?.nombre || 'Sistema' }}</div>
               </td>
+
               <td>
-                <div class="fw-bold">{{ venta.cliente?.nombre || 'Cliente Ocasional' }} {{ venta.cliente?.apellido }}</div>
+                <div class="fw-bold">
+                  {{ venta.cliente?.nombre || 'Cliente' }} {{ venta.cliente?.apellido || 'Ocasional' }}
+                </div>
                 <div class="text-muted small">{{ venta.cliente?.dni || '-' }}</div>
               </td>
+
               <td>
                 <div>{{ venta.fechaVenta | date:'dd/MM/yyyy' }}</div>
                 <div class="text-muted small">{{ venta.fechaVenta | date:'HH:mm' }}</div>
               </td>
-              <td class="fw-bold text-success">S/. {{ venta.total | number:'1.2-2' }}</td>
-              <td>{{ getProductosVenta(venta) }}</td>
-              <td>{{ getTotalCantidad(venta) }}</td>
+
+              <td class="fw-bold text-success">
+                S/. {{ (venta.total + (venta.impuesto || 0)) | number:'1.2-2' }}
+              </td>
+
               <td>
-                <span class="badge-estado" [ngClass]="{'estado-completada': venta.estado === 'REGISTRADA', 'estado-cancelada': venta.estado === 'ANULADA'}">
+                  {{ getProductosVenta(venta) }}
+              </td>
+
+              <td class="text-center">
+                  {{ getTotalCantidad(venta) }}
+              </td>
+
+              <td>
+                <span class="badge-estado" 
+                      [ngClass]="{'estado-completada': venta.estado === 'REGISTRADA', 'estado-cancelada': venta.estado === 'ANULADA'}">
                   {{ getEstadoLabel(venta.estado) }}
                 </span>
               </td>
+
               <td class="acciones-cell">
                 <button class="btn-icon btn-ver" (click)="verDetalleVenta(venta)" title="Ver Detalle">
                   <mat-icon>visibility</mat-icon>
@@ -113,32 +132,40 @@
             </tr>
           </tbody>
         </table>
-        
-        <div *ngIf="ventasFiltradas.length === 0" class="empty-state-widget">
+        <div *ngIf="ventasFiltradas.length === 0 && ventas.length > 0" class="empty-state-widget">
+          <mat-icon>search_off</mat-icon>
+          <p>No hay resultados para el filtro actual.</p>
+        </div>
+        <div *ngIf="ventas.length === 0" class="empty-state-widget">
           <mat-icon>inventory_2</mat-icon>
-          <p>Sin datos suficientes</p>
+          <p>Sin datos de ventas registrados.</p>
         </div>
       </div>
+
+      <div class="footer-tabla" *ngIf="ventas.length > 4" style="padding: 15px; text-align: center;">
+             <button class="btn-ver-todos" (click)="abrirModalHistorialCompleto()" style="background-color: #e3f2fd; color: #1565c0; border: none; padding: 10px 20px; border-radius: 20px; font-weight: 600; cursor: pointer; width: 100%;">
+                Ver todo el Historial ({{ ventas.length }} transacciones)
+             </button>
+      </div>
+
     </div>
 
     <div class="analytics-section-full">
       <div class="card chart-card">
         <div class="card-header-row">
           <h3>TENDENCIA DE INGRESOS</h3>
-          <select class="simple-select" [(ngModel)]="mesSeleccionado" (change)="onMesChange($event)">
-            <option *ngFor="let mes of mesesDisponibles" [value]="mes">{{ mes }}</option>
+          <select class="simple-select" [(ngModel)]="periodoSeleccionado" (change)="onPeriodoChange($event)">
+            <option *ngFor="let p of periodosDisponibles" [value]="p">{{ p }}</option>
           </select>
         </div>
+        
         <div class="big-number-container">
            <span class="label">Ingresos Mes:</span>
            <span class="value">S/. {{ ventaStats.ingresosTotales | number:'1.2-2' }}</span>
         </div>
+        
         <div class="chart-container-responsive">
-          <canvas baseChart
-            [data]="ingresosChartData"
-            [options]="ingresosChartOptions"
-            [type]="ingresosChartType">
-          </canvas>
+          <canvas baseChart [data]="ingresosChartData" [options]="ingresosChartOptions" [type]="ingresosChartType"></canvas>
         </div>
       </div>
 
@@ -150,11 +177,18 @@
               <div class="rank">{{ i + 1 }}</div>
               <div class="content">
                 <div class="title">{{ prod.nombre }}</div>
-                <div class="bar-bg"><div class="bar-fill" [style.width.%]="(prod.cantidad/maxCantidadVendida)*100"></div></div>
+                <div class="bar-bg">
+                  <div class="bar-fill" [style.width.%]="(prod.cantidad/maxCantidadVendida)*100"></div>
+                </div>
               </div>
               <div class="value">{{ prod.cantidad }} un.</div>
             </li>
           </ul>
+
+          <div class="widget-footer" *ngIf="productosVendidos.length > 0">
+            <button class="btn-ver-mas" (click)="abrirModalRanking()">Ver ranking completo</button>
+          </div>
+
           <ng-template #noProductos>
             <div class="empty-state-widget">
               <mat-icon>inventory_2</mat-icon>
@@ -167,17 +201,32 @@
           <h3>ACTIVIDAD RECIENTE</h3>
           <ul class="list-unstyled activity-list" *ngIf="actividadReciente.length > 0; else noActividades">
             <li *ngFor="let act of actividadReciente" class="activity-item">
-              <div class="dot"></div>
+              <div class="dot" [ngClass]="{'success': !act.esAnulada, 'danger': act.esAnulada}"></div>
               <div class="content">
-                <div class="text">{{ act.texto }}</div>
-                <div class="date">{{ act.fecha | date:'dd MMM, HH:mm' }}</div>
+                <div class="act-header">
+                  <span class="act-title">{{ act.esAnulada ? 'Anulación' : 'Venta' }} {{ act.comprobante }}</span>
+                  <span class="act-monto" [class.negative]="act.esAnulada">
+                    S/. {{ act.monto | number:'1.2-2' }}
+                  </span>
+                </div>
+                <div class="act-meta">
+                  <span class="act-cliente">
+                    <mat-icon>person</mat-icon> {{ act.cliente }}
+                  </span>
+                  <span class="act-date">{{ act.fecha | date:'dd MMM, HH:mm' }}</span>
+                </div>
               </div>
             </li>
           </ul>
+
+          <div class="widget-footer" *ngIf="actividadReciente.length > 0">
+            <button class="btn-ver-mas" (click)="abrirModalActividad()">Ver historial completo</button>
+          </div>
+
           <ng-template #noActividades>
             <div class="empty-state-widget">
               <mat-icon>inventory_2</mat-icon>
-              <p>Sin datos suficientes</p>
+              <p>Sin datos recientes</p>
             </div>
           </ng-template>
         </div>
@@ -187,154 +236,148 @@
 </div>
 
 <div class="modal-overlay" *ngIf="mostrarModalVenta" (click)="cerrarModalVenta()">
-   <div class="modal-content modal-venta" (click)="$event.stopPropagation()">
-       
-       <div *ngIf="mostrarAlertaCarrito" class="alerta-flotante-centro">
-            <div class="contenido-alerta">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <mat-icon style="color: #ffca28;">warning</mat-icon>
-                    <span>No se puede procesar: El carrito está vacío.</span>
-                </div>
-                <button type="button" (click)="cerrarAlerta()">CERRAR</button>
-            </div>
-       </div>
+    <div class="modal-content modal-venta" (click)="$event.stopPropagation()">
+        
+        <div *ngIf="mostrarAlertaCarrito" class="alerta-flotante-centro">
+             <div class="contenido-alerta">
+                 <div style="display: flex; align-items: center; gap: 10px;">
+                     <mat-icon style="color: #ffca28;">warning</mat-icon>
+                     <span>No se puede procesar: El carrito está vacío.</span>
+                 </div>
+                 <button type="button" (click)="cerrarAlerta()">CERRAR</button>
+             </div>
+        </div>
 
-       <div class="modal-header">
-           <h2>{{ ventaEditando ? 'Editar Venta' : 'Nueva Venta' }}</h2>
-           <button class="btn-cerrar" (click)="cerrarModalVenta()"><mat-icon>close</mat-icon></button>
-       </div>
-       
-       <div class="venta-form">
-           <div class="form-section">
-                <div class="label-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <label style="font-weight: 600; color: #546e7a;">Cliente</label>
-                    <small style="color: #666; font-style: italic;">(Opcional - Se usará Cliente Ocasional)</small>
-                </div>
-                
-                <div class="cliente-selector" style="position: relative;">
-                    <div class="search-input-wrapper" style="display: flex; align-items: center; gap: 10px;">
-                        <mat-icon style="color: #90a4ae;">person_search</mat-icon>
-                        <input type="text" class="form-input" 
-                               placeholder="Buscar cliente registrado (DNI o Nombre)..." 
-                               [(ngModel)]="busquedaCliente" 
-                               (input)="buscarClientesModal()">
-                    </div>
-                    
-                    <div class="clientes-dropdown" *ngIf="clientesEncontrados.length > 0" 
-                         style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 0 0 8px 8px; z-index: 100; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                         <div class="cliente-option" *ngFor="let c of clientesEncontrados" (click)="seleccionarCliente(c)"
-                              style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;">
-                             <div style="font-weight: 600; color: #2c3e50;">{{c.nombre}} {{c.apellido}}</div>
-                             <div style="font-size: 12px; color: #78909c;">DNI: {{c.dni}}</div>
-                          </div>
-                    </div>
-                </div>
-
-                <div *ngIf="clienteSeleccionado" class="cliente-seleccionado" 
-                     style="margin-top: 10px; background-color: #e8f5e9; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #c8e6c9;">
-                    <div>
-                        <div style="font-weight: 700; color: #2e7d32;">{{clienteSeleccionado.nombre}} {{clienteSeleccionado.apellido}}</div>
-                        <div style="font-size: 12px; color: #388e3c;">DNI: {{clienteSeleccionado.dni}}</div>
-                    </div>
-                    <button (click)="quitarCliente()" class="btn-icon btn-cancelar" style="width: 30px; height: 30px;">
-                        <mat-icon style="font-size: 18px;">close</mat-icon>
-                    </button>
-                </div>
-           </div>
-
-           <div class="form-section">
-                <label style="font-weight: 600; color: #546e7a; margin-bottom: 8px; display: block;">Agregar Productos</label>
-                
-                <div class="producto-selector" style="position: relative;">
-                    <div class="search-input-wrapper" style="display: flex; align-items: center; gap: 10px;">
-                        <mat-icon style="color: #90a4ae;">inventory_2</mat-icon>
-                        <input type="text" class="form-input" 
-                               placeholder="Buscar producto por nombre..." 
-                               [(ngModel)]="busquedaProducto" 
-                               (input)="buscarProductosModal()">
-                    </div>
-
-                    <div class="productos-dropdown" *ngIf="productosEncontrados.length > 0"
-                          style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 0 0 8px 8px; z-index: 100; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                        <div class="producto-option" *ngFor="let p of productosEncontrados" (click)="agregarProducto(p)"
-                             style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-weight: 600; color: #2c3e50;">{{p.nombre}}</div>
-                                <div style="font-size: 12px; color: #78909c;">Stock: {{p.stock}}</div>
-                            </div>
-                            <div style="font-weight: 700; color: #303F9F;">S/. {{p.precio | number:'1.2-2'}}</div>
-                        </div>
-                     </div>
+        <div class="modal-header">
+            <h2>{{ ventaEditando ? 'Editar Venta' : 'Nueva Venta' }}</h2>
+            <button class="btn-cerrar" (click)="cerrarModalVenta()"><mat-icon>close</mat-icon></button>
+        </div>
+        
+        <div class="venta-form">
+            <div class="form-section">
+                 <div class="label-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                     <label style="font-weight: 600; color: #546e7a;">Cliente</label>
+                     <small style="color: #90a4ae; font-style: italic; font-size: 12px;">(Vacío = Cliente Ocasional)</small>
                  </div>
                  
-                 <div class="table-responsive" *ngIf="detallesVenta.length > 0" style="margin-top: 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
-                     <table class="ventas-table" style="min-width: 100%;">
-                        <thead>
-                            <tr>
-                                <th>Producto</th>
-                                <th class="text-center" style="width: 100px;">Cant.</th>
-                                <th class="text-right">Subtotal</th>
-                                <th style="width: 50px;"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let d of detallesVenta; let i=index">
-                                <td>
-                                    <div style="font-weight: 600;">{{d.productoNombre}}</div>
-                                    <div style="font-size: 11px; color: #888;">PU: S/. {{d.precioUnitario | number:'1.2-2'}}</div>
-                                </td>
-                                <td class="text-center">
-                                    <input type="number" [(ngModel)]="d.cantidad" (change)="actualizarSubtotal(i)" 
-                                           class="form-input" min="1" style="width: 60px; text-align: center; padding: 4px;">
-                                </td>
-                                <td class="text-right" style="font-weight: 600; color: #303F9F;">S/. {{d.subtotal | number:'1.2-2'}}</td>
-                                <td class="text-center">
-                                    <button (click)="quitarProducto(i)" class="btn-icon btn-cancelar" title="Quitar">
-                                        <mat-icon>delete</mat-icon>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                     </table>
+                 <div class="cliente-selector" style="position: relative;">
+                     <div class="search-input-wrapper" style="display: flex; align-items: center; gap: 10px;">
+                         <mat-icon style="color: #90a4ae;">person_search</mat-icon>
+                         <input type="text" class="form-input" 
+                                placeholder="Buscar por DNI o Nombre..." 
+                                [(ngModel)]="busquedaCliente" 
+                                (input)="buscarClientesModal()">
+                     </div>
+                     
+                     <div class="clientes-dropdown" *ngIf="clientesEncontrados.length > 0">
+                          <div class="cliente-option" *ngFor="let c of clientesEncontrados" (click)="seleccionarCliente(c)">
+                              <div style="font-weight: 600; color: #2c3e50;">{{c.nombre}} {{c.apellido}}</div>
+                              <div style="font-size: 12px; color: #78909c;">DNI: {{c.dni}}</div>
+                           </div>
+                     </div>
                  </div>
-                 <div *ngIf="detallesVenta.length === 0" style="padding: 20px; text-align: center; color: #999; font-style: italic; background: #fafafa; border-radius: 8px; margin-top: 10px;">
-                     Busque y seleccione productos para agregarlos a la venta.
-                 </div>
-           </div>
-           
-           <div class="form-section" style="border-bottom: none; background: #f8f9fa; padding: 20px; border-radius: 12px;">
-               <div class="totales-venta" style="display: flex; flex-direction: column; gap: 8px;">
-                   <div style="display: flex; justify-content: space-between; font-size: 14px; color: #666;">
-                       <span>Subtotal:</span>
-                       <span>S/. {{ totalesVenta.subtotal | number:'1.2-2' }}</span>
-                   </div>
-                   <div style="display: flex; justify-content: space-between; font-size: 14px; color: #666;">
-                       <span>Impuesto (18%):</span>
-                       <span>S/. {{ totalesVenta.igv | number:'1.2-2' }}</span>
-                   </div>
-                   <div style="display: flex; justify-content: space-between; font-size: 24px; font-weight: 700; color: #303F9F; margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px;">
-                       <span>Total a Pagar:</span>
-                       <span>S/. {{ totalesVenta.total | number:'1.2-2' }}</span>
-                   </div>
-               </div>
-               
-               <div class="form-group" style="margin-top: 20px;">
-                   <label style="font-weight: 600; color: #546e7a; margin-bottom: 8px; display: block;">Condición de Pago</label>
-                   <select [(ngModel)]="ventaForm.condicionPago" class="form-input" style="background: white;">
-                       <option value="Contado">Contado</option>
-                       <option value="Crédito">Crédito</option>
-                   </select>
-               </div>
-           </div>
 
-           <div class="form-actions">
-                <button class="btn-cancelar" (click)="cerrarModalVenta()">Cancelar</button>
-                <button class="btn-guardar" (click)="confirmarVenta()">
-                    <mat-icon>save</mat-icon> Procesar Venta
-                </button>
-           </div>
-       </div>
-   </div>
+                 <div *ngIf="clienteSeleccionado" class="cliente-seleccionado">
+                      <div>
+                          <div style="font-weight: 700; color: #2e7d32;">{{clienteSeleccionado.nombre}} {{clienteSeleccionado.apellido}}</div>
+                          <div style="font-size: 12px; color: #388e3c;">DNI: {{clienteSeleccionado.dni}}</div>
+                      </div>
+                      
+                      <button (click)="quitarCliente()" class="btn-remove-client" title="Quitar cliente">
+                          <mat-icon>close</mat-icon>
+                      </button>
+                  </div>
+            </div>
+
+            <div class="form-section">
+                 <label style="font-weight: 600; color: #546e7a; margin-bottom: 8px; display: block;">Productos</label>
+                 
+                 <div class="producto-selector" style="position: relative;">
+                     <div class="search-input-wrapper" style="display: flex; align-items: center; gap: 10px;">
+                         <mat-icon style="color: #90a4ae;">inventory_2</mat-icon>
+                         <input type="text" class="form-input" 
+                                placeholder="Buscar producto por nombre..." 
+                                [(ngModel)]="busquedaProducto" 
+                                (input)="buscarProductosModal()">
+                     </div>
+
+                     <div class="productos-dropdown" *ngIf="productosEncontrados.length > 0">
+                         <div class="producto-option" *ngFor="let p of productosEncontrados" (click)="agregarProducto(p)">
+                             <div>
+                                 <div style="font-weight: 600; color: #2c3e50;">{{p.nombre}}</div>
+                                 <div style="font-size: 12px; color: #78909c;">Stock: {{p.stock}}</div>
+                             </div>
+                             <div style="font-weight: 700; color: #303F9F;">S/. {{p.precio | number:'1.2-2'}}</div>
+                         </div>
+                      </div>
+                  </div>
+                  
+                  <div class="table-responsive" *ngIf="detallesVenta.length > 0" style="margin-top: 15px; border: 1px solid #e0e0e0; border-radius: 8px; max-height: 250px; overflow-y: auto;">
+                      <table class="ventas-table" style="min-width: 100%;">
+                         <thead>
+                             <tr>
+                                 <th>Producto</th>
+                                 <th class="text-center" style="width: 80px;">Cant.</th>
+                                 <th class="text-right">Subtotal</th>
+                                 <th style="width: 40px;"></th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                             <tr *ngFor="let d of detallesVenta; let i=index">
+                                 <td>
+                                     <div style="font-weight: 600; font-size: 13px;">{{d.productoNombre}}</div>
+                                     <div style="font-size: 11px; color: #888;">PU: S/. {{d.precioUnitario | number:'1.2-2'}}</div>
+                                 </td>
+                                 <td class="text-center">
+                                     <input type="number" [(ngModel)]="d.cantidad" (change)="actualizarSubtotal(i)" 
+                                            class="form-input input-cantidad" min="1">
+                                 </td>
+                                 <td class="text-right" style="font-weight: 700; color: #303F9F; font-size: 13px;">
+                                     S/. {{d.subtotal | number:'1.2-2'}}
+                                 </td>
+                                 <td class="text-center">
+                                     <button (click)="quitarProducto(i)" class="btn-icon-danger" title="Eliminar">
+                                         <mat-icon>delete_outline</mat-icon>
+                                     </button>
+                                 </td>
+                             </tr>
+                         </tbody>
+                      </table>
+                  </div>
+                  
+                  <div *ngIf="detallesVenta.length === 0" class="empty-cart-message">
+                      <mat-icon>shopping_basket</mat-icon>
+                      <span>El carrito está vacío. Busque productos para comenzar.</span>
+                  </div>
+            </div>
+            
+            <div class="form-section" style="border-bottom: none; background: #f8f9fa; padding: 20px; border-radius: 12px;">
+                
+                <div class="totales-venta">
+                    <div class="total-row-final">
+                        <span>Total a Pagar</span>
+                        <span class="monto-final">S/. {{ totalesVenta.total | number:'1.2-2' }}</span>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-top: 20px;">
+                    <label style="font-weight: 600; color: #546e7a; margin-bottom: 8px; display: block;">Condición de Pago</label>
+                    <select [(ngModel)]="ventaForm.condicionPago" class="form-input" style="background: white; cursor: pointer;">
+                        <option value="Contado">Contado</option>
+                        <option value="Crédito">Crédito</option>
+                    </select>
+                    <small *ngIf="!ventaForm.condicionPago" style="color: #d32f2f; margin-top: 5px;">* Requerido</small>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                 <button class="btn-cancelar" (click)="cerrarModalVenta()">Cancelar</button>
+                 <button class="btn-guardar" (click)="confirmarVenta()" [disabled]="!ventaForm.condicionPago">
+                     <mat-icon>save</mat-icon> Procesar Venta
+                 </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="modal-overlay" *ngIf="mostrarModalDetalle" (click)="cerrarModalDetalle()">
@@ -343,17 +386,37 @@
             <h2>Detalle de Venta</h2>
             <button class="btn-cerrar" (click)="cerrarModalDetalle()"><mat-icon>close</mat-icon></button>
         </div>
+        
         <div class="modal-body" *ngIf="ventaDetalle">
              <div class="detalle-grid">
-                <div class="detalle-item"><strong>Comprobante:</strong> {{ ventaDetalle.numComprobante }}</div>
-                <div class="detalle-item"><strong>Fecha:</strong> {{ ventaDetalle.fechaVenta | date:'short' }}</div>
-                <div class="detalle-item"><strong>Cliente:</strong> {{ ventaDetalle.cliente?.nombre || 'Ocasional' }} {{ ventaDetalle.cliente?.apellido }}</div>
-                <div class="detalle-item"><strong>Vendedor:</strong> {{ ventaDetalle.usuario?.nombre || 'Sistema' }}</div>
-                <div class="detalle-item"><strong>Condición:</strong> {{ ventaDetalle.condicionPago }}</div>
-                <div class="detalle-item"><strong>Estado:</strong> {{ getEstadoLabel(ventaDetalle!.estado) }}</div>
+                <div class="detalle-item">
+                    <strong>Comprobante:</strong> 
+                    {{ ventaDetalle.numComprobante || ('Ticket #' + (ventaDetalle.idVenta || ventaDetalle.id || '?')) }}
+                </div>
+                <div class="detalle-item">
+                    <strong>Fecha:</strong> {{ ventaDetalle.fechaVenta | date:'short' }}
+                </div>
+                <div class="detalle-item">
+                    <strong>Cliente:</strong> 
+                    {{ ventaDetalle.cliente?.nombre || ventaDetalle.clienteNombre || 'Cliente Ocasional' }} 
+                    {{ ventaDetalle.cliente?.apellido || '' }}
+                </div>
+                <div class="detalle-item">
+                    <strong>Vendedor:</strong> {{ ventaDetalle.usuario?.nombre || ventaDetalle.vendedorNombre || 'Sistema' }}
+                </div>
+                <div class="detalle-item">
+                    <strong>Condición:</strong> {{ ventaDetalle.condicionPago || 'Contado' }}
+                </div>
+                <div class="detalle-item">
+                    <strong>Estado:</strong> 
+                    <span class="badge-estado" [ngClass]="{'estado-completada': ventaDetalle.estado === 'REGISTRADA', 'estado-cancelada': ventaDetalle.estado === 'ANULADA'}">
+                        {{ getEstadoLabel(ventaDetalle.estado) }}
+                    </span>
+                </div>
              </div>
              
              <h3 style="margin-top: 20px; font-size: 16px; color: #303F9F;">Productos Vendidos</h3>
+             
              <div class="table-responsive" style="border: 1px solid #eee; border-radius: 8px;">
                  <table class="ventas-table">
                      <thead>
@@ -365,17 +428,33 @@
                         </tr>
                      </thead>
                      <tbody>
-                         <tr *ngFor="let det of ventaDetalle.detalleVenta">
-                             <td>{{ det.producto?.nombre }}</td> 
-                             <td class="text-center">{{ det.cantidad }}</td>
-                             <td class="text-right">S/. {{ det.precioUnitario | number:'1.2-2' }}</td>
-                             <td class="text-right">S/. {{ det.subtotal | number:'1.2-2' }}</td>
+                         <tr *ngFor="let det of (ventaDetalle.detalleVenta || ventaDetalle.detalles || [])">
+                             <td>
+                                {{ det.productoNombre || $any(det).producto?.nombre || '⚠️ Producto no identificado' }}
+                             </td> 
+                             <td class="text-center">{{ det.cantidad || 0 }}</td>
+                             
+                             <td class="text-right">
+                                S/. {{ (det.precioUnitario || $any(det).precioVenta || 0) | number:'1.2-2' }}
+                             </td>
+                             
+                             <td class="text-right">
+                                S/. {{ (det.subtotal || 0) | number:'1.2-2' }}
+                             </td>
+                         </tr>
+                         <tr *ngIf="!(ventaDetalle.detalleVenta || ventaDetalle.detalles)?.length">
+                             <td colspan="4" style="text-align: center; padding: 20px; color: #999; font-style: italic;">
+                                No se encontraron detalles para esta venta.
+                             </td>
                          </tr>
                      </tbody>
                  </table>
              </div>
+             
              <div class="totales-venta" style="margin-top: 20px; text-align: right;">
-                 <h2 style="color: #303F9F; margin: 0;">Total: S/. {{ ventaDetalle.total | number:'1.2-2' }}</h2>
+                 <h2 style="color: #303F9F; margin: 0;">
+                    Total: S/. {{ (ventaDetalle.total + (ventaDetalle.impuesto || 0)) | number:'1.2-2' }}
+                 </h2>
              </div>
         </div>
     </div>
@@ -392,5 +471,152 @@
              <button class="btn-guardar btn-danger" style="background-color: #d32f2f; color: white;" (click)="confirmarOcultar()">Sí, Anular Venta</button>
           </div>
        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" *ngIf="mostrarModalHistorialCompleto" (click)="cerrarModalHistorialCompleto()">
+    <div class="modal-content modal-full-table" (click)="$event.stopPropagation()" style="max-width: 1000px; width: 95%;">
+        <div class="modal-header">
+            <h2>Historial Completo de Transacciones</h2>
+            <button class="btn-cerrar" (click)="cerrarModalHistorialCompleto()"><mat-icon>close</mat-icon></button>
+        </div>
+        <div class="modal-body">
+            <div class="lista-header" style="margin-bottom: 20px;">
+                <div class="controles-lista" style="width: 100%; display: flex; flex-wrap: wrap; gap: 10px;">
+                    <div class="search-wrapper" style="flex: 1; min-width: 250px;">
+                        <mat-icon>search</mat-icon>
+                        <input type="text" placeholder="Buscar comprobante, cliente, DNI..." [(ngModel)]="searchTerm" (input)="buscarVentas()">
+                    </div>
+                    <div class="quick-filters" style="flex-wrap: wrap;">
+                        <button class="filter-chip" [class.active]="filtroEstado === ''" (click)="filtroEstado = ''; filtrarPorEstado()">Todas</button>
+                        <button class="filter-chip" [class.active]="filtroEstado === 'REGISTRADA'" (click)="filtroEstado = 'REGISTRADA'; filtrarPorEstado()">Registradas</button>
+                        <button class="filter-chip" [class.active]="filtroEstado === 'ANULADA'" (click)="filtroEstado = 'ANULADA'; filtrarPorEstado()">Anuladas</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="ventas-table">
+                    <thead>
+                        <tr>
+                            <th>Comprobante</th>
+                            <th>Cliente</th>
+                            <th>Fecha</th>
+                            <th>Total</th>
+                            <th>Producto</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let venta of ventas">
+                            <td>
+                                <span class="badge-numero">{{ venta.numComprobante || 'V-' + venta.idVenta }}</span>
+                                <div class="vendedor-subtext">{{ venta.usuario?.nombre || 'Sistema' }}</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ venta.cliente?.nombre || 'Cliente Ocasional' }} {{ venta.cliente?.apellido }}</div>
+                                <div class="text-muted small">{{ venta.cliente?.dni || '-' }}</div>
+                            </td>
+                            <td>
+                                <div>{{ venta.fechaVenta | date:'dd/MM/yyyy' }}</div>
+                                <div class="text-muted small">{{ venta.fechaVenta | date:'HH:mm' }}</div>
+                            </td>
+                            <td class="fw-bold text-success">
+                              S/. {{ (venta.total + (venta.impuesto || 0)) | number:'1.2-2' }}
+                            </td>
+                            <td>{{ getProductosVenta(venta) }}</td>
+                            <td>
+                                <span class="badge-estado" [ngClass]="{'estado-completada': venta.estado === 'REGISTRADA', 'estado-cancelada': venta.estado === 'ANULADA'}">
+                                    {{ getEstadoLabel(venta.estado) }}
+                                </span>
+                            </td>
+                            <td class="acciones-cell">
+                                <button class="btn-icon btn-ver" (click)="verDetalleVenta(venta)" title="Ver Detalle">
+                                    <mat-icon>visibility</mat-icon>
+                                </button>
+                                <button class="btn-icon btn-ocultar" (click)="ocultarVenta(venta)" title="Anular Venta" [disabled]="venta.estado === 'ANULADA'">
+                                    <mat-icon>block</mat-icon>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" *ngIf="mostrarModalActividad" (click)="cerrarModalActividad()">
+    <div class="modal-content modal-ranking" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h2>Bitácora de Actividad Completa</h2>
+            <button class="btn-cerrar" (click)="cerrarModalActividad()"><mat-icon>close</mat-icon></button>
+        </div>
+        <div class="modal-body">
+            <div class="timeline-container">
+                <ul class="list-unstyled activity-list">
+                    <li *ngFor="let act of actividadCompleta" class="activity-item">
+                      <div class="dot" [ngClass]="{'success': !act.esAnulada, 'danger': act.esAnulada}"></div>
+                      <div class="content">
+                        <div class="act-header">
+                          <span class="act-title">{{ act.esAnulada ? 'Anulación' : 'Venta' }} {{ act.comprobante }}</span>
+                          <span class="act-monto" [class.negative]="act.esAnulada">
+                            S/. {{ act.monto | number:'1.2-2' }}
+                          </span>
+                        </div>
+                        <div class="act-meta">
+                          <span class="act-cliente">
+                            <mat-icon>person</mat-icon> {{ act.cliente }}
+                          </span>
+                          <span class="act-date">{{ act.fecha | date:'dd MMM, yyyy HH:mm' }}</span>
+                        </div>
+                      </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" *ngIf="mostrarModalRanking" (click)="cerrarModalRanking()">
+    <div class="modal-content modal-ranking" (click)="$event.stopPropagation()" style="max-width: 500px;">
+        <div class="modal-header">
+            <h2>Ranking de Productos</h2>
+            <button class="btn-cerrar" (click)="cerrarModalRanking()"><mat-icon>close</mat-icon></button>
+        </div>
+        
+        <div class="modal-body">
+            <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 2px solid #f0f0f0; margin-bottom: 15px; font-size: 13px; font-weight: 700; color: #546e7a;">
+                <span>Posición</span>
+                <span>Producto</span>
+                <span>Total</span>
+            </div>
+
+            <ul class="list-unstyled full-list">
+                <li *ngFor="let prod of productosCompletos; let i = index" class="list-item" style="padding: 10px 0; border-bottom: 1px solid #f9f9f9;">
+                    
+                    <div class="rank" [ngClass]="{'trofeo-oro': i===0, 'trofeo-plata': i===1, 'trofeo-bronce': i===2}">
+                        <mat-icon *ngIf="i < 3" style="font-size: 14px; width: 14px; height: 14px;">emoji_events</mat-icon>
+                        <span *ngIf="i >= 3">{{ i + 1 }}</span>
+                    </div>
+                    
+                    <div class="content">
+                        <div class="title" style="font-size: 14px;">{{ prod.nombre }}</div>
+                        <div class="bar-bg" style="height: 4px; margin-top: 6px;">
+                            <div class="bar-fill" 
+                                 [ngClass]="{'bar-oro': i===0, 'bar-plata': i===1, 'bar-bronce': i===2}"
+                                 [style.width.%]="(prod.cantidad / maxCantidadVendida) * 100">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="value" style="text-align: right;">
+                        <div style="font-size: 14px; font-weight: 700; color: #2c3e50;">{{ prod.cantidad }}</div>
+                        <div style="font-size: 11px; color: #90a4ae;">S/. {{ prod.ingresos | number:'1.2-2' }}</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
     </div>
 </div>

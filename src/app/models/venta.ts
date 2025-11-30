@@ -44,7 +44,7 @@ export interface VentaDTO {
 }
 
 export interface DetalleVentaDTO {
-  idProducto: number;
+  idProducto?: number;
   cantidad: number;
 }
 

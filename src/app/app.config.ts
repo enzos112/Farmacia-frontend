@@ -19,7 +19,8 @@ export const appConfig: ApplicationConfig = {
     // 4. Activa HttpClient y le registra tu interceptor
     provideHttpClient(
       withInterceptors([jwtInterceptor]) 
-    )
+    ),
+    provideCharts(withDefaultRegisterables())
     
   ]
 };

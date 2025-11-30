@@ -8,13 +8,18 @@ import { MatButtonModule } from '@angular/material/button';
   standalone: true,
   imports: [CommonModule, MatDialogModule, MatButtonModule],
   templateUrl: './confirm-dialog.html',
-  // ¡CORRECCIÓN AQUÍ! Cambiado de .scss a .css
-  styleUrls: ['./confirm-dialog.css'] 
+  styleUrls: ['./confirm-dialog.css']
 })
-export class ConfirmDialogComponent { // <--- ¡Asegúrate que diga 'export class'!
+export class ConfirmDialogComponent {
   constructor(
     public dialogRef: MatDialogRef<ConfirmDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { title?: string; message: string; showConfirm?: boolean }
+    // AGREGAMOS confirmText y confirmColor a la interfaz
+    @Inject(MAT_DIALOG_DATA) public data: { 
+        title?: string; 
+        message: string; 
+        confirmText?: string;
+        confirmColor?: 'primary' | 'warn' | 'accent';
+    }
   ) {}
 
   onConfirm(): void {
