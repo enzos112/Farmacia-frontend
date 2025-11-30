@@ -13,6 +13,7 @@ import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 
 import { Venta, DetalleVenta, VentaStats, ProductoVenta, ClienteVenta } from '../../models/venta';
 import { VentaService } from '../../services/venta.service';
+import { VentaEventService } from '../../services/venta-event.service';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog';
 
 @Component({
@@ -36,7 +37,8 @@ export class VentasComponent implements OnInit {
   constructor(
     private ventaService: VentaService, 
     private dialog: MatDialog,
-    private snackBar: MatSnackBar 
+    private snackBar: MatSnackBar,
+    private ventaEventService: VentaEventService
   ) {}
 
   // --- DATOS PRINCIPALES ---
@@ -672,6 +674,7 @@ cargarDatos() {
         this.mostrarNotificacion('Venta registrada correctamente', 'success');
         this.cargarDatos(); 
         this.cerrarModalVenta();
+        this.ventaEventService.notificarVentaRealizada(); // Notificar a otros componentes
       },
       error: (err) => {
         console.error('❌ Error al guardar:', err);

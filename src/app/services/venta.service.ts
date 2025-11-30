@@ -36,7 +36,6 @@ export class VentaService {
         }),
         catchError(() => of(null)) // Si falla una pagina especifica, la ignoramos
       );
-      
       peticiones.push(req);
     }
 

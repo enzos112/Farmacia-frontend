@@ -80,7 +80,7 @@
       </div>
 
       <!-- Top productos más vendidos -->
-      <div class="card top-vendidos">
+      <div class="card top-vendidos" *ngIf="topProductos.length > 0">
         <div class="top-header">
           <h3>TOP PRODUCTOS MÁS VENDIDOS</h3>
           <p class="top-fecha">{{ mesSeleccionado || mesActual }}</p>

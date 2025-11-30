@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { VentaService } from '../../services/venta.service';
+import { VentaEventService } from '../../services/venta-event.service';
 import { Venta, DetalleVenta, VentaStats } from '../../models/venta';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData } from 'chart.js';
@@ -26,7 +27,8 @@ export class DashboardComponent implements OnInit {
     private router: Router,
     private ventaService: VentaService,
     private productoService: ProductoService,
-    private authService: AuthService
+    private authService: AuthService,
+    private ventaEventService: VentaEventService
   ) {
     const token = this.authService.getToken();
     this.userRole = getRoleFromToken(token || '');
@@ -74,7 +76,7 @@ export class DashboardComponent implements OnInit {
     datasets: [
       {
         type: 'bar',
-        label: 'Unidades',
+        label: 'Monto',
         data: [],
         backgroundColor: 'rgba(22,41,104,0.5)', // Color azul con menor intensidad
         borderRadius: 4,
@@ -171,23 +173,43 @@ export class DashboardComponent implements OnInit {
     this.mesSeleccionado = this.mesActual;
     // Intentar cargar datos reales desde el servicio
     this.cargarDatosDesdeServicio();
-    
     // Cargar datos reales de productos
     this.cargarDatosProductos();
+
+    // Suscribirse a eventos de venta realizada para refrescar dashboard
+    this.ventaEventService.ventaRealizada$.subscribe(() => {
+      this.cargarDatosDesdeServicio();
+      this.cargarDatosProductos();
+    });
   }
 
   private cargarDatosDesdeServicio() {
     // Obtener estadísticas generales
-    this.ventaService.getVentaStats().subscribe({
-      next: (stats) => {
-        this.ventaStats = stats;
-        // Mapear a las propiedades de UI
-        this.ventasDelDia = stats.ventasHoyMonto; // monto en soles del día
-        this.totalMesActual = stats.ingresosTotales;
-        this.numeroVentasDelDia = stats.ventasHoy; // conteo de ventas del día
+    this.ventaService.getVentas().subscribe({
+      next: (ventas) => {
+        // Filtrar ventas válidas del mes seleccionado
+        const mesIndex = this.mesesDelAnio.indexOf(this.mesSeleccionado || this.mesActual);
+        const year = new Date().getFullYear();
+        const ventasFiltradas = ventas.filter(v => {
+          const d = new Date(v.fechaVenta);
+          return v.estado === 'REGISTRADA' && d.getFullYear() === year && d.getMonth() === mesIndex;
+        });
+        // Sumar el total de ingresos del mes seleccionado
+        this.totalMesActual = ventasFiltradas.reduce((acc, v) => acc + v.total + (v.impuesto || 0), 0);
+
+        // Ventas del día (solo si es el mes actual)
+        const hoy = new Date();
+        if (mesIndex === hoy.getMonth()) {
+          const hoyStr = hoy.toISOString().slice(0, 10);
+          const ventasHoy = ventasFiltradas.filter(v => v.fechaVenta?.startsWith(hoyStr));
+          this.ventasDelDia = ventasHoy.reduce((acc, v) => acc + v.total + (v.impuesto || 0), 0);
+          this.numeroVentasDelDia = ventasHoy.length;
+        } else {
+          this.ventasDelDia = 0;
+          this.numeroVentasDelDia = 0;
+        }
       },
       error: () => {
-        // Si falla, dejar los valores en cero
         this.ventasDelDia = 0;
         this.totalMesActual = 0;
         this.numeroVentasDelDia = 0;
@@ -207,9 +229,12 @@ export class DashboardComponent implements OnInit {
 
         const productCounts: { [key: string]: number } = {};
         ventasFiltradas.forEach(v => {
-          const detalles = Array.isArray(v.detalles) ? v.detalles : [];
+          // Unificar detalles: puede venir como 'detalleVenta' o 'detalles'
+          const detalles = Array.isArray(v.detalles) && v.detalles.length > 0
+            ? v.detalles
+            : (Array.isArray(v.detalleVenta) ? v.detalleVenta : []);
           detalles.forEach(d => {
-            const nombre = d.productoNombre ?? '';
+            const nombre = d.productoNombre ?? (d.producto && d.producto.nombre) ?? '';
             if (!nombre) return;
             productCounts[nombre] = (productCounts[nombre] || 0) + d.cantidad;
           });
@@ -264,18 +289,26 @@ export class DashboardComponent implements OnInit {
   }
 
   private actualizarInventoryChart() {
-    const labels = this.topProductos.map(p => p.nombre);
-    const cantidades = this.topProductos.map(p => p.ventas);
-    const total = cantidades.reduce((a, b) => a + b, 0) || 1;
-    const porcentajes = cantidades.map(c => +(c / total * 100).toFixed(2));
+    // Nuevo: mostrar el monto de las últimas 20 ventas recientes
+    this.ventaService.getVentas().subscribe(ventas => {
+      // Ordenar por fecha descendente (ya debería venir así)
+      const ventasRecientes = ventas.slice(0, 20);
+      const labels = ventasRecientes.map((v, i) => {
+        const d = new Date(v.fechaVenta);
+        return `${d.getDate()}/${d.getMonth() + 1}`;
+      });
+      const montos = ventasRecientes.map(v => v.total + (v.impuesto || 0));
+      const total = montos.reduce((a, b) => a + b, 0) || 1;
+      const porcentajes = montos.map(m => +(m / total * 100).toFixed(2));
 
-    this.inventoryChartData = {
-      labels,
-      datasets: [
-        { ...this.inventoryChartData.datasets[0], data: cantidades },
-        { ...this.inventoryChartData.datasets[1], data: porcentajes }
-      ]
-    };
+      this.inventoryChartData = {
+        labels,
+        datasets: [
+          { ...this.inventoryChartData.datasets[0], data: montos },
+          { ...this.inventoryChartData.datasets[1], data: porcentajes }
+        ]
+      };
+    });
   }
 
   obtenerMesActual() {
