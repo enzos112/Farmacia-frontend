@@ -2,6 +2,8 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/auth-service';
+import { getRoleFromToken } from '../../core/jwt-helper';
+import { getUserNameFromToken } from '../../core/jwt-user-helper';
 
 // --- Importaciones de Angular Material ---
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -38,6 +40,8 @@ import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dial
 export class LayoutComponent {
 
   private authService = inject(AuthService);
+  public userRole: string | null = null;
+  public userName: string | null = null;
   private dialog = inject(MatDialog);
 
   // Agrega esta línea para la ruta de tu logo
@@ -65,11 +69,30 @@ export class LayoutComponent {
     this.sidenavOpened = !this.sidenavOpened;
   }
 
-  menuItems = [
-    { text: 'Dashboard', link: '/pages/dashboard', icon: 'dashboard' },
-    { text: 'Productos', link: '/pages/productos', icon: 'inventory_2' },
-    { text: 'Clientes', link: '/pages/clientes', icon: 'people' },
-    { text: 'Ventas', link: '/pages/ventas', icon: 'shopping_cart' },
-    { text: 'Usuarios', link: '/pages/usuarios', icon: 'manage_accounts' },
-  ];
+  menuItems: { text: string; link: string; icon: string }[] = [];
+
+  constructor() {
+    const token = this.authService.getToken();
+    this.userRole = getRoleFromToken(token || '');
+    this.userName = getUserNameFromToken(token || '');
+    this.menuItems = this.getMenuItemsByRole(this.userRole);
+  }
+
+  getMenuItemsByRole(role: string | null) {
+    if (role === 'VENDEDOR' || role === 'vendedor') {
+      return [
+        { text: 'Productos', link: '/pages/productos', icon: 'inventory_2' },
+        { text: 'Clientes', link: '/pages/clientes', icon: 'people' },
+        { text: 'Ventas', link: '/pages/ventas', icon: 'shopping_cart' },
+      ];
+    }
+    // Por defecto, menú completo
+    return [
+      { text: 'Dashboard', link: '/pages/dashboard', icon: 'dashboard' },
+      { text: 'Productos', link: '/pages/productos', icon: 'inventory_2' },
+      { text: 'Clientes', link: '/pages/clientes', icon: 'people' },
+      { text: 'Ventas', link: '/pages/ventas', icon: 'shopping_cart' },
+      { text: 'Usuarios', link: '/pages/usuarios', icon: 'manage_accounts' },
+    ];
+  }
 }
